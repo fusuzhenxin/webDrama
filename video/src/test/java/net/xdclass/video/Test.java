@@ -1,5 +1,6 @@
 package net.xdclass.video;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.SneakyThrows;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -112,36 +113,16 @@ public class Test {
         }
         return fileOutPath;
     }
+@org.junit.jupiter.api.Test
+    void s() {
+    String introduction = "简介： 该剧由收集漫画改编，讲述即使不再信赖爱情仍然想要谈爱情的女人和认为爱情很棘手然则很想搞暧昧的汉子之间超实际主义题材的浪漫爱情电视剧。";
 
-    public static void main(String[] args) {
-        // m3u8下載地址
-//        String m3u8UrlPath = "https://dh5.cntv.myalicdn.com/asp/h5e/hls/1200/0303000a/3/default/cdd3da535c12447a8cdb7c8ca949b2f6/1200.m3u8";
-        String m3u8UrlPath = "https://v11.tlkqc.com/wjv11/202403/12/A72sPDsLHn3/video/1000k_0X720_64k_25/hls/index.m3u8";
+    // 去除简介及其后的内容
+    // 去除简介部分
+    String trimmedIntroduction = introduction.replaceFirst("^简介：\\s*", "");
 
+    System.out.println(trimmedIntroduction.trim());
 
-        // 下载索引文件信息
-        String m3u8FileIndexInfo = getM3u8FileIndexInfo(m3u8UrlPath);
-        System.out.println("========================");
-        System.out.println(m3u8FileIndexInfo);
-        System.out.println("========================");
-
-        // 解析索引文件中的ts列表信息
-        List<String> tsList = analysisTsList(m3u8FileIndexInfo);
-
-        // 这里为了测试就先下载10个吧
-
-
-        System.out.println(tsList);
-
-        // 依次下载ts文件
-
-        // 下载到本地的磁盘位置
-        String folderPath = "F:/rob";
-        // 请求ts文件的下载地址
-        String preUrlPath = "https://v11.tlkqc.com/wjv11/202403/12/A72sPDsLHn3/video/1000k_0X720_64k_25";
-        downLoadIndexFile(tsList, folderPath, preUrlPath);
-        String mp4Path = composeFile(tsList, folderPath);
-        System.out.println(mp4Path);
     }
 
 }

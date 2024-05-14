@@ -65,7 +65,7 @@
 
 
     <el-pagination
-        style="justify-content: left;margin-top: 20px"
+        style="justify-content: center;margin-top: 20px"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="pageNum"

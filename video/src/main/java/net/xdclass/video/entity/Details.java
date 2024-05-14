@@ -1,6 +1,7 @@
 package net.xdclass.video.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -8,8 +9,9 @@ import lombok.Data;
 @Data
 @TableName("details")
 public class Details {
-    @TableId(value = "id",type = IdType.AUTO)
-    private Integer id;
+    @TableId(value = "details_id",type = IdType.AUTO)
+    @TableField("details_id")
+    private Integer details_id;
     private String name;
     private String classify;
     private String description; //描述

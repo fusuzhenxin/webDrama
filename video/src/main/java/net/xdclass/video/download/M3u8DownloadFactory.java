@@ -312,7 +312,7 @@ public class M3u8DownloadFactory {
                     int maxIndex = getMaxIndexForName(title);
                     int diversity = maxIndex + 1;
                     long videoSize = getVideoSize();
-                    String extractedUrl = ""; // Assuming you have this variable defined elsewhere
+                     // Assuming you have this variable defined elsewhere
 
 
                     // Set up video URL

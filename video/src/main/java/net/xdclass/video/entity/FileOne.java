@@ -1,6 +1,7 @@
 package net.xdclass.video.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -9,7 +10,8 @@ import lombok.Data;
 @TableName("file")
 public class FileOne {
     @TableId(type = IdType.AUTO)
-    private Integer id;
+    @TableField("episode_id")
+    private Integer episode_id;
     private String name;
     private String type;
     private Long size;

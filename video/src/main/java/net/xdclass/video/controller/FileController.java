@@ -59,7 +59,7 @@ public class FileController {
              url = dbFiles.getUrl();
              boolean exist=FileUtil.exist(FILE_UPLOAD_PATH+url.substring(url.lastIndexOf("/")+1));
              if (!exist){
-                 fileMapper.deleteById(dbFiles.getId());
+
                  file.transferTo(uploadFile);
                  url="http://localhost:9090/files/"+fileUUID;
              }
@@ -242,7 +242,7 @@ public class FileController {
                           ) {
         //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
         QueryWrapper<FileOne> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("episode_id");
         if (!"".equals(name)) {
             queryWrapper.like("name", name).eq("diversity",diversity);
         }

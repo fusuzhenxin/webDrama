@@ -63,6 +63,10 @@ const onButtonClick=async()=>{
         label: "港剧",
       },
       {
+        value: "陆剧",
+        label: "陆剧",
+      },
+      {
         value: "美剧",
         label: "美剧",
       },

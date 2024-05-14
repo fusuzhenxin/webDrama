@@ -26,7 +26,7 @@
 
     <el-table :data="tableData" style="width: 100%;" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"></el-table-column>
-      <el-table-column prop="id" label="编号" width="180"></el-table-column>
+      <el-table-column prop="episodeId" label="编号" width="180"></el-table-column>
       <el-table-column prop="name" label="名称" width="180"></el-table-column>
       <el-table-column prop="url" label="视频链接"></el-table-column>
       <el-table-column prop="diversity" label="分集"></el-table-column>
@@ -62,7 +62,7 @@
     </el-dialog>
 
     <el-pagination
-        style="justify-content: left;margin-top: 20px"
+        style="justify-content: center;margin-top: 20px"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="pageNum"

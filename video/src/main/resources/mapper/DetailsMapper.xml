@@ -18,7 +18,7 @@
         select id, name,cover
         from details
         where classify=#{classify}
-        order by id desc limit 12
+        order by details_id desc limit 12
     </select>
     <select id="selectLikes" resultType="net.xdclass.video.entity.Details">
         select quantity
@@ -37,7 +37,7 @@
                 name like concat('%',#{ name },'%')
             </if>
         </where>
-        order by id desc
+        order by details_id desc
     </select>
     <select id="search" resultType="net.xdclass.video.entity.Details">
         select * from details
@@ -46,7 +46,7 @@
                 name like concat('%',#{ name },'%')
             </if>
         </where>
-        order by id desc
+        order by details_id desc
     </select>
     <select id="selectAcquiesce" resultType="net.xdclass.video.entity.Details">
         select * from details

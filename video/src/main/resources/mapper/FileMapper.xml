@@ -6,7 +6,7 @@
     </insert>
 
     <select id="selectTop10" resultType="net.xdclass.video.entity.FileOne">
-        SELECT MIN(id) AS id, name, MIN(cover) AS cover
+        SELECT MIN(episode_id) AS episode_id, name, MIN(cover) AS cover
         FROM file
         WHERE classify = #{classify}
         GROUP BY name;
@@ -30,6 +30,6 @@
                 name like concat('%',#{ name },'%')
             </if>
         </where>
-        order by id desc
+        order by episode_id desc
     </select>
 </mapper>

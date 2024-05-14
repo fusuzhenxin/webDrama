@@ -9,7 +9,6 @@
 
     <div style="margin: 10px 0">
       <el-button style="margin-left: 5px" type="primary" @click="dialogVisible = true"><i class="el-icon-search"></i> 新增</el-button>
-      <el-button style="margin-left: 5px" type="warning" @click="add"><i class="el-icon-search"></i> 新增</el-button>
 
       <el-popconfirm
           class="ml-5"
@@ -28,7 +27,7 @@
 
     <el-table :data="tableData" style="width: 100%;" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"></el-table-column>
-      <el-table-column prop="id" label="编号" width="100"></el-table-column>
+      <el-table-column prop="detailsId" label="编号" width="100"></el-table-column>
       <el-table-column prop="name" label="剧名" width="120"></el-table-column>
       <el-table-column prop="actors" label="主演" width="100"></el-table-column>
       <el-table-column prop="cover" label="封面" width="130px">
@@ -41,7 +40,7 @@
           <span>{{ truncateString(row.description, 20) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="classify" label="分类"></el-table-column>
+      <el-table-column prop="classify" label="分类" width="150px"></el-table-column>
       <el-table-column prop="quantity" label="点赞数"></el-table-column>
       <el-table-column prop="collect" label="收藏数"></el-table-column>
       <el-table-column label="操作" width="250">
@@ -66,12 +65,20 @@
         <el-form-item label="剧名" prop="username">
           <el-input  v-model="form.name" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="分类" prop="classify">
+        <el-form-item label="分类"   prop="classify">
           <el-input v-model="form.classify" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="form.description" autocomplete="off"></el-input>
+  
+          <el-input
+            v-model="form.description"
+            style="width: 300px"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            type="textarea"
+          
+        />
         </el-form-item>
+        
         <el-form-item label="主演" prop="actors">
           <el-input v-model="form.actors" autocomplete="off"></el-input>
         </el-form-item>
@@ -92,7 +99,7 @@
 
 
     <el-pagination
-        style="justify-content: left;margin-top: 20px"
+        style="justify-content: center;margin-top: 20px"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         :current-page="pageNum"
@@ -126,12 +133,6 @@ const form = ref({
   cover: ''
 })
 
-const  add = async ()=>{
-  const res=request.post('/videos/save');
-  if (res.data.code == '200'){
-    ElMessage.success("成功")
-  }
-}
 const handleClose = (done) => {
   if (confirm('确定要关闭对话框吗？')) {
     done(); // 关闭对话框

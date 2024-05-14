@@ -66,7 +66,7 @@ public class DetailsController {
             url = dbDetails.getCover();
             boolean exist=FileUtil.exist(FILE_UPLOAD_PATH+url.substring(url.lastIndexOf("/")+1));
             if (!exist){
-                detailsMapper.deleteById(dbDetails.getId());
+
                 cover.transferTo(uploadFile);
                 url="http://localhost:9090/files/"+UUID;
             }
@@ -117,6 +117,15 @@ public class DetailsController {
     public Result selectTop10(@RequestParam String classify){
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
         queryWrapper.like("classify", classify);
+        queryWrapper.last("limit 12"); // Limit to top 10
+        List<Details> details= detailsMapper.selectList(queryWrapper);
+        return Result.success(details);
+    }
+    @GetMapping("/selectTop8")
+    public Result selectTop8(@RequestParam String classify){
+        QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+        queryWrapper.like("classify", classify);
+        queryWrapper.last("limit 8"); // Limit to top 8
         List<Details> details= detailsMapper.selectList(queryWrapper);
         return Result.success(details);
     }
@@ -124,7 +133,6 @@ public class DetailsController {
     @GetMapping("/selectAcquiesce")
     public Result selectAcquiesce(@RequestParam String classify){
         List<Details> details= detailsMapper.selectAcquiesce(classify);
-        System.out.println("");
         return Result.success(details);
 
     }
@@ -158,7 +166,7 @@ public class DetailsController {
                            @RequestParam Integer pageSize) {
         //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
         QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("details_id");
         if (!"".equals(name)) {
             queryWrapper.like("name", name);
         }
@@ -173,7 +181,7 @@ public class DetailsController {
                              @RequestParam String classify) {
         //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
         QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
+        queryWrapper.orderByDesc("details_id");
         if (!"".equals(name)) {
             queryWrapper.like("name", name).eq("classify",classify);
         }

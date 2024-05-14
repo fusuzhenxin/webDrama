@@ -67,7 +67,7 @@ const loadShortDramas = async (classify) => {
 const loadVideoData = async (classify) => {
   try {
     // Fetch short drama data
-    const res = await request.get('/details/selectTop10', { params: { classify: classify } });
+    const res = await request.get('/details/selectTop8', { params: { classify: classify } });
     // If successful, update the short drama data
     VideoData.value = res.data.data;
     console.log("====",VideoData.value)
