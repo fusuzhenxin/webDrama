@@ -9,7 +9,7 @@
             <el-menu-item style="color: white" index="HelloWorld">首页</el-menu-item>
           </router-link>
           <router-link to="/traversing">
-            <el-menu-item style="color: white" index="traversing">穿越</el-menu-item>
+            <el-menu-item style="color: white" index="traversing">时空之旅</el-menu-item>
           </router-link>
           <router-link to="/counterattack">
             <el-menu-item style="color: white" index="counterattack">逆袭</el-menu-item>

@@ -56,7 +56,7 @@ const loadShortDramas = async (classify) => {
     console.error('Error loading short dramas:', error);
   }
 };
-loadShortDramas("穿越");
+loadShortDramas("时空之旅");
 
 // Router instance
 const router = useRouter();
