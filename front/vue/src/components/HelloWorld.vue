@@ -58,7 +58,6 @@ const loadShortDramas = async (classify) => {
     // If successful, update the short drama data
     shortDramas.value = res.data.data;
     console.log("====",shortDramas.value)
-    console.log();
   } catch (error) {
     // Catch and handle errors
     console.error('Error loading short dramas:', error);

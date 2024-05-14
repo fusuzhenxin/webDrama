@@ -33,3 +33,4 @@ build/
 .vscode/
 /src/main/resources/files
 /front/vue/node_modules
+/video/src/main/resources/files
