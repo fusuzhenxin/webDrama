@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.xdclass.video.mapper.FileMapper">
+    <insert id="inserts">
+        insert into file(name,type,size,url,md5,diversity,original_filename) values (#{name},#{type},#{size},#{url},#{md5},#{diversity},#{original_filename})
+    </insert>
+
+    <select id="selectTop10" resultType="net.xdclass.video.entity.FileOne">
+        SELECT MIN(id) AS id, name, MIN(cover) AS cover
+        FROM file
+        WHERE classify = #{classify}
+        GROUP BY name;
+
+    </select>
+
+
+    <select id="selectTop101" resultType="net.xdclass.video.entity.FileOne">
+        select * from file
+    </select>
+    <select id="selectName" resultType="net.xdclass.video.entity.FileOne">
+        SELECT id, name, url, type
+        FROM file
+        WHERE name = #{name}
+            LIMIT 1;
+    </select>
+    <select id="selectSearch" resultType="net.xdclass.video.entity.FileOne">
+        select * from file
+        <where>
+            <if test="name !=null and name != ''">
+                name like concat('%',#{ name },'%')
+            </if>
+        </where>
+        order by id desc
+    </select>
+</mapper>

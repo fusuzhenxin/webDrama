@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.xdclass.video.mapper.DetailsMapper">
+
+    <update id="updateQuantityStr">
+        update details
+        set quantity=#{quantityStr}
+        where name = #{name}
+    </update>
+    <update id="updateCollect">
+        update details
+        set collect=#{collectStr}
+        where name = #{name}
+    </update>
+
+
+    <select id="selectTop10" resultType="net.xdclass.video.entity.Details">
+        select id, name,cover
+        from details
+        where classify=#{classify}
+        order by id desc limit 12
+    </select>
+    <select id="selectLikes" resultType="net.xdclass.video.entity.Details">
+        select quantity
+        from details
+        where name=#{name}
+    </select>
+    <select id="selectCollect" resultType="net.xdclass.video.entity.Details">
+        select collect
+        from details
+        where name=#{name}
+    </select>
+    <select id="finAllName" resultType="net.xdclass.video.entity.Details">
+        select * from details
+        <where>
+            <if test="name !=null and name != ''">
+                name like concat('%',#{ name },'%')
+            </if>
+        </where>
+        order by id desc
+    </select>
+    <select id="search" resultType="net.xdclass.video.entity.Details">
+        select * from details
+        <where>
+            <if test="name !=null and name != ''">
+                name like concat('%',#{ name },'%')
+            </if>
+        </where>
+        order by id desc
+    </select>
+    <select id="selectAcquiesce" resultType="net.xdclass.video.entity.Details">
+        select * from details
+        where classify=#{classify}
+    </select>
+
+</mapper>

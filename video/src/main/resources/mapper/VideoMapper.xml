@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.xdclass.video.mapper.VideoMapper">
+    <insert id="save">
+        insert into outer_url(name,url) values(#{name},#{url})
+    </insert>
+
+
+    <select id="seleteDiversitys" resultType="java.lang.Integer">
+        select COUNT(*)
+        from file
+        where name=#{name}
+    </select>
+    <select id="seleteEpisodeUrl" resultType="java.lang.String">
+        select url
+        from file
+        where name=#{videoName} AND diversity=#{episodeNumber}
+    </select>
+
+
+</mapper>

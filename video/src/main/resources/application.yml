@@ -1,0 +1,30 @@
+server:
+  port: 9090
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/video1?serverTimezone=GMT%2b8
+    username: root
+    password: 1234
+
+  servlet:
+    multipart:
+      max-file-size: 120MB
+      max-request-size: 120MB
+
+#  mvc:
+#    # URL响应地址（Springboot默认为/**)
+#    static-path-pattern: /files/**
+
+  web:
+    resources:
+      static-locations: classpath:/static,classpath:/public,classpath:/resources,classpath:/META-INF/resources
+
+  profiles:
+    active=dev:
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+chromedriverPath : F:\\chromedriver\\chromedriver.exe
