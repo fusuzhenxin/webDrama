@@ -160,23 +160,19 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     }
 
     // 辅助方法：将中文标题转换为拼音
-    private String convertToPinyin(String title) {
+    public static String convertToPinyin(String chinese) {
         StringBuilder pinyin = new StringBuilder();
-        char[] chars = title.toCharArray();
-        int count = 0; // 记录已经转换的汉字数量
-
-        for (char c : chars) {
-            if (count < 2) { // 只转换前两个汉字
-                String[] pinyins = PinyinHelper.toHanyuPinyinStringArray(c);
-                if (pinyins != null && pinyins.length > 0) {
-                    pinyin.append(pinyins[0]); // 取第一个拼音
-                    count++; // 记录转换的汉字数量
+        for (char c : chinese.toCharArray()) {
+            if (Character.toString(c).matches("[\\u4E00-\\u9FA5]+")) {
+                String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
+                if (pinyinArray != null && pinyinArray.length > 0) {
+                    // 拼接所有拼音结果（去除声调）
+                    pinyin.append(pinyinArray[0].replaceAll("\\d", ""));
                 }
             } else {
-                break; // 已经转换了两个汉字，退出循环
+                pinyin.append(c);
             }
         }
-
         return pinyin.toString();
     }
 
