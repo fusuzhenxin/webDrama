@@ -9,7 +9,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.xdclass.video.common.Result;
 import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.FileOne;
+import net.xdclass.video.entity.Images;
 import net.xdclass.video.mapper.DetailsMapper;
+import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.service.DetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -29,16 +31,13 @@ public class DetailsController {
     private DetailsMapper detailsMapper;
     @Autowired
     private DetailsService detailsService;
+    @Autowired
+    private ImagesMapper imagesMapper;
+
 
     @PostMapping("/save")
     public Result save(@RequestBody Details details){
         detailsService.saveOrUpdate(details);
-        return Result.success();
-    }
-
-    @PostMapping("/saveVideo")
-    public Result saveVideo(){
-        detailsService.saveVideo();
         return Result.success();
     }
 
@@ -49,7 +48,8 @@ public class DetailsController {
             + "main" + File.separator
             + "resources"
             + File.separator
-            + "files" + File.separator;
+            + "files" + File.separator
+            + "image" + File.separator;
 
 
 
@@ -57,6 +57,8 @@ public class DetailsController {
     public Result  details(@RequestParam("cover") MultipartFile cover ,String name, String classify, String description, String actors) throws IOException {
         String originalFilename = cover.getOriginalFilename();
         String type = FileUtil.extName(originalFilename);
+
+        long size=cover.getSize();
         String UUID= IdUtil.fastSimpleUUID()+ StrUtil.DOT+type;
         File uploadFile = new File(FILE_UPLOAD_PATH+UUID);
         String md5 = SecureUtil.md5(cover.getInputStream());
@@ -68,12 +70,22 @@ public class DetailsController {
             if (!exist){
 
                 cover.transferTo(uploadFile);
-                url="http://localhost:9090/files/"+UUID;
+                url="http://localhost:9090/files/image/"+UUID;
             }
         }else {
             cover.transferTo(uploadFile);
-             url="http://localhost:9090/files/"+UUID;
+             url="http://localhost:9090/files/image/"+UUID;
         }
+
+
+        Images images=new Images();
+        images.setName(name);
+        images.setSize(size);
+        images.setOriginalFilename(originalFilename);
+        images.setType(type);
+        images.setMd5(md5);
+        images.setCover(url);
+        imagesMapper.insert(images);
 
         Details details=new Details();
         details.setDescription(description);
@@ -81,7 +93,6 @@ public class DetailsController {
         details.setClassify(classify);
         details.setActors(actors);
         details.setName(name);
-        details.setMd5(md5);
         detailsMapper.insert(details);
         return Result.success();
     }

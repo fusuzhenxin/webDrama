@@ -18,7 +18,7 @@
         select * from file
     </select>
     <select id="selectName" resultType="net.xdclass.video.entity.FileOne">
-        SELECT id, name, url, type
+        SELECT episode_id, name, url, type
         FROM file
         WHERE name = #{name}
             LIMIT 1;

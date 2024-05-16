@@ -11,7 +11,7 @@ import lombok.Data;
 public class Details {
     @TableId(value = "details_id",type = IdType.AUTO)
     @TableField("details_id")
-    private Integer details_id;
+    private Integer detailsId;
     private String name;
     private String classify;
     private String description; //描述

@@ -36,3 +36,6 @@ build/
 /video/src/main/resources/files
 /front/vue2/node_modules
 /front/vue2/node_modules
+/front/vue/node_modules
+/front/vue/node_modules
+/front/vue2/node_modules

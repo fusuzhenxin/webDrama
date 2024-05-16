@@ -36,7 +36,7 @@
           <el-popconfirm
               style="margin-left: 5px"
               title="您确定删除这行数据吗？"
-              @confirm="del(scope.row.id)"
+              @confirm="del(scope.row.episodeId)"
           >
             <template v-slot:reference>
               <el-button type="danger">删除</el-button>
@@ -100,8 +100,8 @@ const save = () => {
   // 添加保存逻辑
 };
 
-const del = async  (id) =>{
-  const res= await request.delete(`/file/${id}`);
+const del = async  (episodeId) =>{
+  const res= await request.delete(`/file/${episodeId}`);
   if (res.data.code === '200'){
     ElMessage.success('删除成功');
     loadFilePage();
@@ -159,7 +159,7 @@ const delBatch = async () => {
     return;
   }
 
-  const ids = multipleSelection.value.map(v => v.id);  // [{}, {}, {}] => [1,2,3]
+  const ids = multipleSelection.value.map(v => v.episodeId);  // [{}, {}, {}] => [1,2,3]
   console.log("++++",ids)
   try {
     const res = await request.post("/file/del/batch", ids);

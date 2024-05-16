@@ -1,31 +1,38 @@
 <template>
-  <div class="container" style="min-height: 100%; padding-bottom: 100px;background-color: black;">
-    <el-container>
-      <el-header style="padding: 0px">
-        <div class="nav-list">
-          <navigation/>
-          <!-- router-view 用于显示当前路由对应的组件内容 -->
-
-        </div>
-      </el-header>
+  <div class="outer-container" style="background-color: black;">
+    <div class="container">
       <el-container>
-        <el-main>      <!-- 身体 -->
-          <van-swipe class="my-swipe" :autoplay="3000" indicator-color="white" style="background-color: transparent;">
-            <!-- 更换图片 -->
-            <van-swipe-item>
-              <img class="carousel-image" src="@/assets/img.png" alt="Image 1">
-            </van-swipe-item>
-            <van-swipe-item>
-              <img class="carousel-image" src="@/assets/3.jpg" alt="Image 2">
-            </van-swipe-item>
-          </van-swipe>
-          <HelloWorld/>
-        </el-main>
+        <el-header style="background-color: black;width: 1160px;margin-left :20px;padding: 0px;">
+          <div>
+            <navigation />
+            <!-- router-view 用于显示当前路由对应的组件内容 -->
+          </div>
+        </el-header>
+        <el-container>
+          <el-main style="overflow: hidden;">
+            <!-- 身体 -->
+            <van-swipe
+              class="my-swipe"
+              :autoplay="3000"
+              indicator-color="white"
+              style="background-color: transparent;"
+            >
+              <!-- 更换图片 -->
+              <van-swipe-item>
+                <img class="carousel-image" src="@/assets/img.png" alt="Image 1" />
+              </van-swipe-item>
+              <van-swipe-item>
+                <img class="carousel-image" src="@/assets/3.jpg" alt="Image 2" />
+              </van-swipe-item>
+            </van-swipe>
+            <HelloWorld />
+          </el-main>
+        </el-container>
       </el-container>
-    </el-container>
-
+    </div>
   </div>
 </template>
+
 
 <script setup>
 import Navigation from "@/components/navigation.vue";
@@ -46,24 +53,46 @@ import HelloWorld from "@/components/HelloWorld.vue";
 </script>
 
 <style scoped>
-body{
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  margin: 0;
 }
+
+.outer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.container {
+  min-height: 100%;
+  padding-bottom: 100px;
+  background-color: black;
+  width: 1200px; /* 设置固定宽度 */
+}
+
 .nav-list {
   position: fixed;
-  top: -0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 30px;
   list-style: none;
-  background-color: black;
+  background-color: gold;
   z-index: 1000;
 }
+
 .my-swipe {
   background-color: transparent; /* 设置轮播图容器背景色为透明 */
-  width: 1370px;
+  width: 100%;
   height: 482px;
   margin-top: -20px;
 }

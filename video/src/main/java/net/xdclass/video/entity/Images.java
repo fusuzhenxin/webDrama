@@ -7,19 +7,15 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName("file")
-public class FileOne {
+@TableName("images")
+public class Images {
     @TableId(type = IdType.AUTO)
-    @TableField("episode_id")
-    private Integer episodeId;
-
-    @TableField("details_id")
-    private Integer detailsId;
+    private Integer id;
     private String name;
     private String type;
     private Long size;
-    private String url;
+    private String cover;
     private String md5;
-    private String diversity;
+    @TableField("original_filename")
     private String originalFilename;
 }

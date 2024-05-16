@@ -17,12 +17,14 @@ spring:
 #    # URL响应地址（Springboot默认为/**)
 #    static-path-pattern: /files/**
 
-  web:
-    resources:
-      static-locations: classpath:/static,classpath:/public,classpath:/resources,classpath:/META-INF/resources
 
-  profiles:
-    active=dev:
+#    resources:
+#      static-locations: classpath:/static,classpath:/public,classpath:/resources,classpath:/META-INF/resources/,file:/files/image/,file:/files/video/
+#
+#
+#
+#      profiles:
+#    active=dev:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -1,8 +1,7 @@
 <template>
-    <div class="container" style="min-height: 100%; padding-bottom: 100px;">
-      <el-container>
-        <el-header style="padding: 0px">
-          <el-menu :default-active="activeIndex" style="justify-content: center;padding: 0px;background-color: black;border-bottom: 0px solid;" mode="horizontal" @select="handleMenuSelect">
+
+        <el-header style="height: 60px;">
+          <el-menu :default-active="activeIndex" style="justify-content: center;background-color: black;border-bottom: 0px solid;" mode="horizontal" @select="handleMenuSelect">
             <router-link to="/HelloWorld">
             <el-menu-item style="color: white;" index="HelloWorld">首页</el-menu-item>
           </router-link>
@@ -35,9 +34,8 @@
 
           </el-menu>
         </el-header>
-</el-container>
 
-    </div>
+
   </template>
 
 <script setup>
@@ -55,6 +53,6 @@ const search =() =>{
 };
 </script>
 
-<style>
+<style scoped>
 
 </style>

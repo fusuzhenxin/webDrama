@@ -1,7 +1,7 @@
 <template>
     <div class="container" v-if="videoData" style="min-height: 100%; padding-bottom: 100px;background-color: black;">
       <el-container>
-        <el-header>
+        <el-header style="height: 60px;">
           <div class="nav-list">
             <navigation/>
           </div>

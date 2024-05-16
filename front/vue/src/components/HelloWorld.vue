@@ -3,9 +3,9 @@
   <div class="container" style="min-height: 100%; padding-bottom: 100px;">
     <el-container>
       <el-header>
-        <h1 style="color: white;margin-left: 50px;font-size: 30px">推荐热门</h1>
+        <h1 style="color: white;margin-left: -20px;font-size: 30px;padding: 0px;margin-bottom: 30px;margin-top: 0px;">推荐热门</h1>
         <div class="drama-list">
-          <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.id,drama.name)">
+          <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.detailsId,drama.name)">
             <div class="image-wrapper">
               <img :src="drama.cover" :alt="drama.name" class="drama-image">
               <!-- 调整播放按钮样式 -->
@@ -21,9 +21,9 @@
    <div>
 
       <el-main style="margin-top: 700px">
-        <h1 style="color: white;margin-left: 50px;font-size: 30px">逆袭</h1>
+        <h1 style="color: white;margin-left: -30px;font-size: 30px;margin-top: 0px;">逆袭</h1>
         <div class="drama-list1">
-          <div v-for="(drama, index) in VideoData" :key="index" class="drama-card1" @click="goToDramaDetail(drama.id,drama.name)">
+          <div v-for="(drama, index) in VideoData" :key="index" class="drama-card1" @click="goToDramaDetail(drama.detailsId,drama.name)">
             <div class="image-wrapper">
               <img :src="drama.cover" :alt="drama.name" class="drama-image">
               <!-- 调整播放按钮样式 -->
@@ -85,7 +85,7 @@ const router = useRouter();
 // Method to navigate to drama detail page
 const goToDramaDetail = (dramaId,name) => {
   // Navigate to the detail page and pass drama ID as route parameter
-  router.push({ name: 'videoDetail', params: { id: dramaId ,name: name} });
+  router.push({ name: 'videoDetail', params: { detailsId: dramaId ,name: name} });
   
 };
 
@@ -105,34 +105,33 @@ h1 {
 }
 
 .drama-list {
-  width: 1200px;
+  width: 1190px;
   height: auto;
-  margin-left: 50px;
+  margin-left: -32px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
 
-  border-style: solid;
 }
 .drama-list1 {
-  width: 1200px;
+  width: 860px;
   height: auto;
-  margin-left: 50px;
+  margin-left: -40px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-
-  border-style: solid;
+  margin-top: 10px;
+  
 }
 .drama-card {
-  width: calc(15% - 10px);
-  margin-left: 10px;
-  margin-bottom: 20px;
-  padding: 10px;
+  width: calc(15% - -13px);
+  margin-left: 5px;
+  margin-bottom: 10px;
+  padding: 0px;
   box-sizing: border-box;
 }
 .drama-card1 {
-   width: calc(25% - 15px);
+   width: calc(32% - 17px);
    margin-left: 10px;
    margin-bottom: 20px;
    padding: 10px;

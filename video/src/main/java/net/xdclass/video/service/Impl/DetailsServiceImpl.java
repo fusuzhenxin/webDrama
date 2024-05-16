@@ -63,32 +63,6 @@ public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  im
 
     }
 
-    @Override
-    public void saveVideo() {
-        for (int page = 1; page < 10; page++) {
-            String url = "https://www.kuaikaw.cn/browse/417-464/" + page;
-            try {
-                Document document = Jsoup.connect(url).get();
-                Elements elements = document.getElementsByClass("BrowseList_itemBox__S5QRX");
-
-                for (Element element : elements) {
-                    String coverUrl = "https://www.kuaikaw.cn/" + element.select("img").attr("src");
-                    String title = element.select("img").attr("alt");
-                    String tag = element.select("a:nth-child(1).BrowseList_tagItem__fAz6w").text();
-                    String intro = element.select("a.BrowseList_bookIntro__mp8fu").text();
-
-                    Details details = new Details();
-                    details.setName(title);
-                    details.setCover(coverUrl);
-                    details.setClassify(tag);
-                    details.setDescription(intro);
-                   this.save(details);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     @Override
     public Details selectCollect(String name) {

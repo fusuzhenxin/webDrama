@@ -21,5 +21,5 @@ public interface DetailsService extends IService<Details> {
 
     void add(Details details);
 
-    void saveVideo();
+
 }

@@ -8,11 +8,14 @@ import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.FileOne;
+import net.xdclass.video.entity.Images;
 import net.xdclass.video.entity.Video;
 import net.xdclass.video.main.M3u8Main;
 import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.FileMapper;
+import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.mapper.VideoMapper;
+import net.xdclass.video.service.DetailsService;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;
 import org.jsoup.Jsoup;
@@ -37,7 +40,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.System.*;
@@ -50,7 +55,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     private DetailsMapper detailsMapper;
 
     @Autowired
+    private DetailsService detailsService;
+    @Autowired
     private FileService fileService;
+
+    @Autowired
+    private ImagesMapper imagesMapper;
 
     @Autowired
     private FileMapper fileMapper;
@@ -205,15 +215,21 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 fos.write(buffer, 0, len);
                 fileSize += len;
             }
+
+
             MessageDigest md5Digest = MessageDigest.getInstance("MD5");
             byte[] mdBytes=md5Digest.digest();
             String md5 = bytesToHex(mdBytes);
             String VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
+            //分集排序
             int maxIndex=getMaxIndexForName(title);
             int diversity=maxIndex+1;
+            Integer detailsId = getDetailsId(title);
+            out.println(detailsId);
             FileOne files=new FileOne();
             files.setName(title);
             files.setUrl(VideoUrl);
+            files.setDetailsId(detailsId);
             files.setMd5(md5);
             files.setSize(fileSize);
             files.setType("mp4");
@@ -226,6 +242,15 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             e.printStackTrace();
         }
     }
+
+    private Integer getDetailsId(String name) {
+        QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+        queryWrapper.eq("name",name);
+        Details details1 = detailsMapper.selectOne(queryWrapper);
+        Integer detailsId = details1.getDetailsId();
+        return detailsId;
+    }
+
     private int getMaxIndexForName(String name){
         //创建一个查询条件， QueryWrapper包装器构建查询条件
         QueryWrapper<FileOne> queryWrapper=new QueryWrapper<>();
@@ -532,7 +557,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
     //图片下载
     @SneakyThrows
-    public  String downLoadImage(String imageUrl, String destinationPath) {
+    public Map<String, Object> downLoadImage(String imageUrl, String destinationPath) {
+        Map<String, Object> result = new HashMap<>();
         try {
             URL url = new URL(imageUrl);
             URLConnection connection = url.openConnection();
@@ -548,10 +574,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                     outputStream.write(bytes, 0, bytesRead);
                 }
 
+                String fileName = new File(imageUrl).getName();
+                long fileSize = new File(destinationPath).length();
                 byte[] md5Bytes = digestInputStream.getMessageDigest().digest();
                 String md5 = bytesToHex(md5Bytes);
-                return md5;
+
+                // 将值放入Map
+                result.put("fileName", fileName);
+                result.put("fileSize", fileSize);
+                result.put("md5", md5);
+
             }
+            return result;
         } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
@@ -590,14 +624,27 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             try {
                 String  url="http://localhost:9090/files/image/"+UUID;
                 //下载
-                String md5 = downLoadImage(imgUrl, destinationPaths);
+
+                Map<String, Object> stringObjectMap = downLoadImage(imgUrl, destinationPaths);
+                String fileName = (String) stringObjectMap.get("fileName");
+                long fileSize = (long) stringObjectMap.get("fileSize");
+                String md5 = (String) stringObjectMap.get("md5");
+
+                Images images=new Images();
+                images.setCover(url);
+                images.setSize(fileSize);
+                images.setOriginalFilename(fileName);
+                images.setType(type);
+                images.setMd5(md5);
+                images.setName(title);
+                imagesMapper.insert(images);
+
                 Details details=new Details();
                 details.setDescription(intro);
                 details.setName(title);
                 details.setClassify(classify);
                 details.setActors(role);
                 details.setCover(url);
-                details.setMd5(md5);
                 details.setActors(role);
                 details.setCollect("1000");
                 details.setQuantity("2000");

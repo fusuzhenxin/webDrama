@@ -1,5 +1,7 @@
 <template>
+    <div class="outer-container" style="background-color: white;">
   <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+
     <el-container>
       <el-header style="padding: 0px">
         <div class="nav-list">
@@ -118,6 +120,7 @@
     </el-container>
 
 
+  </div>
   </div>
 </template>
 <script setup>

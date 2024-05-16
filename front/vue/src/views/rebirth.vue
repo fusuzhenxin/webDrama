@@ -1,7 +1,8 @@
 <template>
+<div class="outer-container" style="background-color: white;">
   <div class="container" style="min-height: 100%; padding-bottom: 100px;">
     <el-container>
-      <el-header style="padding: 0px">
+      <el-header style="width: 100%;">
         <div class="nav-list">
           <navigation/>
         </div>
@@ -30,6 +31,7 @@
       <el-footer>Footer</el-footer>
     </el-container>
   </div>
+</div>
 </template>
 <script setup>
 import Navigation from "@/components/navigation.vue";
@@ -72,12 +74,19 @@ const goToDramaDetail = (dramaId,name) => {
 
 <style scoped>
 /* CSS styles for the drama section */
+.outer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
 .nav-list {
   position: fixed;
-  top: -0px;
+  top: 0px;
   left: 0px;
   width: 100%;
-  height: 30px;
+  height: 60px;
   list-style: none;
   background-color: black;
   z-index: 1000;
