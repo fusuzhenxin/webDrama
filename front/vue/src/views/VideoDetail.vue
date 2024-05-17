@@ -99,6 +99,7 @@ const isCollect=ref(false);
       console.error('Error loading video data:', error);
     }
   };
+  
   const loadDescription =async () => {
   try {
     const res=await request.get('/details/finAll', {params: {name: videoName.value} })

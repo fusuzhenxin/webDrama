@@ -53,6 +53,7 @@ public class DetailsController {
 
 
 
+    //上传图片
     @PostMapping("/description")
     public Result  details(@RequestParam("cover") MultipartFile cover ,String name, String classify, String description, String actors) throws IOException {
         String originalFilename = cover.getOriginalFilename();
@@ -118,12 +119,8 @@ public class DetailsController {
         return Result.success(detailsList);
     }
 
-    @GetMapping("/search")
-    public Result search(@RequestParam String name){
-        List<Details> detailsList=detailsService.search(name);
-        return Result.success(detailsList);
-    }
 
+    //热门视频
     @GetMapping("/selectTop10")
     public Result selectTop10(@RequestParam String classify){
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
@@ -132,11 +129,13 @@ public class DetailsController {
         List<Details> details= detailsMapper.selectList(queryWrapper);
         return Result.success(details);
     }
+
+    //首页的大视频
     @GetMapping("/selectTop8")
     public Result selectTop8(@RequestParam String classify){
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
         queryWrapper.like("classify", classify);
-        queryWrapper.last("limit 8"); // Limit to top 8
+        queryWrapper.last("limit 6"); // Limit to top 8
         List<Details> details= detailsMapper.selectList(queryWrapper);
         return Result.success(details);
     }
@@ -147,44 +146,32 @@ public class DetailsController {
         return Result.success(details);
 
     }
+    //点赞增加
     @GetMapping("/likes")
     public Result likes(@RequestParam String name){
         Details details = detailsService.selectLikes(name);
         return Result.success(details.getQuantity());
     }
 
-
+    //点赞删除
     @GetMapping("/likesDelete")
     public Result collectDelete(@RequestParam String name){
         return Result.success(detailsService.selectlikesDelete(name).getQuantity());
     }
 
-
+    //收藏增加
     @GetMapping("/collect")
     public Result Collect(@RequestParam String name){
         return Result.success(detailsService.selectCollect(name).getCollect());
     }
 
+    //收藏取消
     @GetMapping("/collectDelete")
     public Result CollectDelete(@RequestParam String name){
         return Result.success(detailsService.selectCollectDelete(name).getCollect());
     }
 
-    //使用了 @RequestParam 注解来声明方法的参数，用于从请求中获取对应的参数值。
-    @GetMapping("/page")
-    public Result findPage(@RequestParam(defaultValue = "") String name,
-                           @RequestParam Integer pageNum,
-                           @RequestParam Integer pageSize) {
-        //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
-        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("details_id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name);
-        }
-        Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
-        return Result.success(page);
-    }
-
+    //模糊查询
     @GetMapping("/paging")
     public Result findPaging(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
@@ -193,9 +180,13 @@ public class DetailsController {
         //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
         QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
         queryWrapper.orderByDesc("details_id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name).eq("classify",classify);
+        // 如果 name 或 classify 中有一个不为空，则添加对应的查询条件
+        if (!"".equals(name) || !"".equals(classify)) {
+            queryWrapper.and(wrapper -> wrapper.like(!"".equals(name), "name", name)
+                    .or()
+                    .like(!"".equals(classify), "classify", classify));
         }
+
         Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
         return Result.success(page);
     }
@@ -205,6 +196,7 @@ public class DetailsController {
         detailsService.removeById(id);
         return Result.success();
     }
+    //批量删除
     @PostMapping("/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids) {
         detailsService.removeByIds(ids);

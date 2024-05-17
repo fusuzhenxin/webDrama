@@ -46,8 +46,10 @@ public class FileController {
             + "resources" + java.io.File.separator
             + "files" + java.io.File.separator
             + "video" + java.io.File.separator;
+
+    //单个视频上传
     @PostMapping("/upload")
-    public  String upload(@RequestParam MultipartFile file,String name,String classify,String diversity) throws IOException{
+    public  String upload(@RequestParam MultipartFile file,String name,String diversity) throws IOException{
         String originalFilename= file.getOriginalFilename();
         String type= FileUtil.extName(originalFilename);
 
@@ -99,9 +101,9 @@ public class FileController {
 
     }
 
+    //批量上传视频
     @PostMapping("/uploadList")
-    public List<String> uploads(@RequestParam("files") List<MultipartFile> files, String name,
-                               String classifications) throws IOException {
+    public List<String> uploads(@RequestParam("files") List<MultipartFile> files, String name) throws IOException {
 
         List<String> urls = new ArrayList<>();
 
@@ -154,7 +156,6 @@ public class FileController {
             saveFile.setUrl(url);
             saveFile.setMd5(md5);
             saveFile.setDiversity(String.valueOf(diversity));
-//            saveFile.setCover(coverUrl);
             fileMapper.insert(saveFile);
             urls.add(url);
         }
@@ -163,6 +164,7 @@ public class FileController {
     }
 
 
+    //分集排序
     private int getMaxIndexForName(String name){
         //创建一个查询条件， QueryWrapper包装器构建查询条件
         QueryWrapper<FileOne> queryWrapper=new QueryWrapper<>();
@@ -184,18 +186,6 @@ public class FileController {
             }
             return maxIndex;
         }
-    }
-
-    private String saveCoverImage(MultipartFile cover) throws IOException{
-        String originalFilename= cover.getOriginalFilename();
-        String type= FileUtil.extName(originalFilename);
-        String UUID=IdUtil.fastSimpleUUID()+StrUtil.DOT+type;
-        java.io.File uploadFile = new java.io.File(FILE_UPLOAD_PATH + UUID);
-        String cover1;
-
-        cover.transferTo(uploadFile);
-        cover1="http://localhost:9090/files/"+UUID;
-        return cover1;
     }
 
 
@@ -234,6 +224,7 @@ public class FileController {
 
     }
 
+    //删除图片方法
     public static boolean deleteImage(String imageUrl) {
         // 假设 imageUrl 是文件的绝对路径
         File imageFile = new File(imageUrl);
@@ -253,17 +244,6 @@ public class FileController {
             return false;
         }
     }
-    @GetMapping("/selectTop10")
-    public Result selectTop10(@RequestParam  String classify){
-        List<FileOne> filesList=fileService.selectTop10(classify);
-        return Result.success(filesList);
-    }
-
-    @GetMapping("/selectTop101")
-    public Result selectTop101(){
-        List<FileOne> filesList=fileMapper.selectTop101();
-        return Result.success(filesList);
-    }
 
     @GetMapping("/{id}")
     public Result findId(@PathVariable Integer id){
@@ -271,18 +251,12 @@ public class FileController {
         return Result.success(files);
     }
 
+    //第一集url和短剧的信息
     @GetMapping("/Inception")
     public Result Inception(@RequestParam String name){
        FileOne filesList=fileMapper.selectName(name);
         return Result.success(filesList);
     }
-
-    @GetMapping("/search")
-    public Result search(@RequestParam String name){
-        List<FileOne> filesList=fileService.selectSearch(name);
-        return Result.success(filesList);
-    }
-
     //使用了 @RequestParam 注解来声明方法的参数，用于从请求中获取对应的参数值。
     @GetMapping("/page")
     public Result findPage(@RequestParam(defaultValue = "") String name,
@@ -293,9 +267,12 @@ public class FileController {
         //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
         QueryWrapper<FileOne> queryWrapper = new QueryWrapper<>();
         queryWrapper.orderByDesc("episode_id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name).eq("diversity",diversity);
+        if (!"".equals(name) || !"".equals(diversity)) {
+            queryWrapper.and(wrapper -> wrapper.like(!"".equals(name), "name", name)
+                    .or()
+                    .like(!"".equals(diversity), "diversity", diversity));
         }
+
         Page<FileOne> page = fileService.page(new Page<>(pageNum, pageSize), queryWrapper);
         return Result.success(page);
     }

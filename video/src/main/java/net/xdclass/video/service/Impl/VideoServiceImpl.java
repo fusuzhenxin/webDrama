@@ -1,5 +1,6 @@
 package net.xdclass.video.service.Impl;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.rmi.ServerException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -55,8 +57,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     private DetailsMapper detailsMapper;
 
     @Autowired
-    private DetailsService detailsService;
-    @Autowired
     private FileService fileService;
 
     @Autowired
@@ -67,22 +67,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
     //静态文件路径
     private static final String FILE_UPLOAD_PATH = getProperty("user.dir")
-            + java.io.File.separator
-            + "src" + java.io.File.separator
-            + "main" + java.io.File.separator
+            + File.separator
+            + "src" + File.separator
+            + "main" + File.separator
             + "resources"
-            + java.io.File.separator
-            + "files" + java.io.File.separator
-            + "image" + java.io.File.separator;
+            + File.separator
+            + "files" + File.separator
+            + "image" + File.separator;
 
     private static final String FILE_UPLOAD_PATH1 = getProperty("user.dir")
-            + java.io.File.separator
-            + "src" + java.io.File.separator
-            + "main" + java.io.File.separator
+            + File.separator
+            + "src" + File.separator
+            + "main" + File.separator
             + "resources"
-            + java.io.File.separator
-            + "files" + java.io.File.separator
-            + "video" + java.io.File.separator;
+            + File.separator
+            + "files" + File.separator
+            + "video" + File.separator;
 
     @Override
     public Integer seleteDiversitys(String name) {
@@ -109,7 +109,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         try {
 
                 String urls = "https://www.kuaikaw.cn/search/?searchValue=" + name;
-                System.out.println("正在爬取：" + urls);
+                out.println("正在爬取：" + urls);
                 //最外面的url
                 Document document = Jsoup.connect(urls).get();
                 Elements element = document.select(".TagBookList_tagItem__xL2IA");
@@ -124,10 +124,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                         String role;
                         //剧名
                         String title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
+                        //分类
                         String classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
+                        //图片url
                         String imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
+                        //主演
                         String actors=element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
                         String url="https://www.kuaikaw.cn"+imgUrl;
+                        //详情
                         String details = element1.select(".DramaDetail_intro__O7jEz").text();
 
                         if (actors==null){
@@ -141,14 +145,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                         Elements elements2 = element1.select(".pcDrama_catalogItem__4Q_C0");
                         for (Element element2 : elements2) {
                             if (downloadedEpisodes.get() >= 5) { // 限制下载5集
-                                System.out.println("已下载5集，结束下载。");
+                                out.println("已下载5集，结束下载。");
                                 downloadedEpisodes.set(0);
                                 return;
                             }
-                            //每一集url
+                            //每一集页面url
                             String href1 = element2.select("a.pcDrama_catalogItem__4Q_C0").attr("href");
                             String videoUrl = "https://www.kuaikaw.cn" + href1;
-                            System.setProperty("webdriver.chrome.driver", chromedriverPath);
+                            setProperty("webdriver.chrome.driver", chromedriverPath);
                             chromeDriver = new ChromeDriver();
                             chromeDriver.get(videoUrl);
 
@@ -157,12 +161,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
                             List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playVideo > video"));
                             for (WebElement element3 : elements3) {
-                                String src = element3.getAttribute("src");
-                                System.out.println(src);
-                                download(src, title, () -> {
+                                //视频url
+                                String Url = element3.getAttribute("src");
+                                out.println(Url);
+                                download(Url, title, () -> {
                                     if (downloadedEpisodes.incrementAndGet() >= 5) {
                                         chromeDriver.close();
-
                                     }
                                 });
                             }
@@ -174,53 +178,64 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         }
     }
 
-    // 辅助方法：将中文标题转换为拼音
-    public static String convertToPinyin(String chinese) {
-        StringBuilder pinyin = new StringBuilder();
-        for (char c : chinese.toCharArray()) {
-            if (Character.toString(c).matches("[\\u4E00-\\u9FA5]+")) {
-                String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
-                if (pinyinArray != null && pinyinArray.length > 0) {
-                    // 拼接所有拼音结果（去除声调）
-                    pinyin.append(pinyinArray[0].replaceAll("\\d", ""));
-                }
-            } else {
-                pinyin.append(c);
-            }
-        }
-        return pinyin.toString();
-    }
-
     @SneakyThrows
     public  void download(String url, String title,  Runnable onComplete) throws IOException {
 
         // 将标题转换为拼音
         String pinyin = convertToPinyin(title);
         // 根据拼音创建文件夹
-        String destDir = FILE_UPLOAD_PATH1 + java.io.File.separator + pinyin;
-        java.io.File dir = new java.io.File(destDir);
+        String destDir = FILE_UPLOAD_PATH1 + File.separator + pinyin;
+        File dir = new File(destDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
 
         String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + "mp4";
-        String destinationPath = destDir + java.io.File.separator + UUID; // 本地文件路径
+        String destinationPath = destDir + File.separator + UUID; // 本地文件路径
         URL videoUrl = new URL(url);
         long fileSize = 0;
+        byte[] mdBytes;
         try (InputStream is = videoUrl.openStream();
              FileOutputStream fos = new FileOutputStream(destinationPath)) {
             int len;
             byte[] buffer = new byte[1024];
             while ((len = is.read(buffer)) != -1) {
-                fos.write(buffer, 0, len);
-                fileSize += len;
+
+            }
+            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+            mdBytes = md5Digest.digest();
+        }
+            String md5 = bytesToHex(mdBytes);
+            FileOne videoByMd5 = getVideoByMd5(md5);
+            String VideoUrl;
+            if (videoByMd5!=null){
+                VideoUrl = videoByMd5.getUrl();
+                boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 +pinyin+File.separator+ VideoUrl.substring(VideoUrl.lastIndexOf("/") + 1));
+                if (!exist){
+                    try (InputStream down = videoUrl.openStream();
+                         FileOutputStream fos = new FileOutputStream(destinationPath)) {
+                        int len;
+                        byte[] buffer = new byte[1024];
+                        while ((len = down.read(buffer)) != -1) {
+                            fos.write(buffer, 0, len);
+                            fileSize += len;
+                        }
+                    }
+                    VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
+                }
+            }else {
+                try (InputStream down = videoUrl.openStream();
+                     FileOutputStream fos = new FileOutputStream(destinationPath)) {
+                    int len;
+                    byte[] buffer = new byte[1024];
+                    while ((len = down.read(buffer)) != -1) {
+                        fos.write(buffer, 0, len);
+                        fileSize += len;
+                    }
+                    }
+                VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
             }
 
-
-            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-            byte[] mdBytes=md5Digest.digest();
-            String md5 = bytesToHex(mdBytes);
-            String VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
             //分集排序
             int maxIndex=getMaxIndexForName(title);
             int diversity=maxIndex+1;
@@ -237,18 +252,21 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             files.setDiversity(String.valueOf(diversity));
             fileMapper.insert(files);
             onComplete.run();
-            System.out.println("下载成功");
-        } catch (IOException e) {
-            e.printStackTrace();
+            out.println("下载成功");
         }
-    }
 
     private Integer getDetailsId(String name) {
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("name",name);
-        Details details1 = detailsMapper.selectOne(queryWrapper);
-        Integer detailsId = details1.getDetailsId();
-        return detailsId;
+        try {
+            Details details1 = detailsMapper.selectOne(queryWrapper);
+            Integer detailsId = details1.getDetailsId();
+            return detailsId;
+        }catch (Exception e){
+           e.printStackTrace();
+           return null;
+        }
+
     }
 
     private int getMaxIndexForName(String name){
@@ -275,86 +293,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     }
 
     @SneakyThrows
-//    public void saveList(String name, String classify) {
-//        try {
-//            String homeUrl = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
-//            System.out.println("正在爬取：" + homeUrl);
-//
-//            Document document = Jsoup.connect(homeUrl).get();
-//            Elements elements = document.select(".m-item");
-//
-//            for (Element element : elements) {
-//                String href = element.select("a.thumb").attr("href");
-//                String twoUrl = "https://v.ijujitv.cc/" + href;
-//                Document document1 = Jsoup.connect(twoUrl).get();
-//                Elements elements1 = document1.select(".main-inner");
-//
-//                for (Element element1 : elements1) {
-//                    String title = element1.select("h1.title").text();
-//                    String trimmedIntroduction = element1.select("div.albumDetailMain-right > p").text();
-//                    String intro = trimmedIntroduction.replaceFirst("^简介：\\s*", "");
-//                    String role = element1.select("p:nth-child(5) > a").text();
-//                    String img = element1.select("img").attr("data-original");
-//                    String imgURL = "https://v.ijujitv.cc/" + img;
-//                    imgUrl(imgURL, title, classify, role, intro);
-//                    Elements elements2 = element1.select("#playlist3 > div > ul > li");
-//
-//                    System.setProperty("webdriver.chrome.driver", chromedriverPath);
-//                    ChromeDriver chromeDriver = new ChromeDriver();
-//                    for (Element element2 : elements2) {
-//
-//                        String text = element2.select(".autowidth").text();
-//                        String href1 = element2.select(".autowidth").attr("href");
-//                        String videoUrl = "https://v.ijujitv.cc/" + href1;
-//
-//                        if ("https://v.ijujitv.cc//m.nwtef.xyz/dl/index.html?sc=1001_dc_xk&srcPlay=play".equals(videoUrl)) {
-//                            continue;
-//                        }
-//
-//
-//                        chromeDriver.get(videoUrl);
-//
-//                        waitForPageLoad(chromeDriver);
-//                        List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
-//                        for (WebElement element3 : elements3) {
-//                            String VideoUrl = element3.getAttribute("src");
-//                            int startIndex = VideoUrl.indexOf("url=");
-//                            if (startIndex != -1) {
-//                                String extractedUrl = VideoUrl.substring(startIndex + "url=".length());
-//                                int endIndex = extractedUrl.indexOf(".m3u8");
-//                                if (endIndex != -1) {
-//                                    extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
-//                                    String modifiedUrl = removeLastSegment(extractedUrl);
-//                                    String thirdLine = getThirdLine(extractedUrl);
-//                                    String newVideoUrl;
-//                                    if (thirdLine == null) {
-//                                        newVideoUrl = extractedUrl;
-//                                    } else {
-//                                        newVideoUrl = modifiedUrl + thirdLine;
-//                                    }
-//
-////                                    M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, fileService, () -> {
-////                                        if (downloadedEpisodes1.incrementAndGet() >= 3) {
-////                                            out.println("已下载三集");
-////                                            chromeDriver.close();
-////                                            downloadedEpisodes1.set(1);
-////                                            out.println("你好");
-////                                        }
-////                                    });
-//                                    M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,fileService, () -> downloadNextVideo(chromeDriver, elements2, element2,title));
-//                                    return;
-//
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-    public void saveList(String name,String classify) {
+    public void saveList(String name, String classify) {
 
         String homeUrl = "https://v.ijujitv.cc/search/-------------.html?wd="+name;
 
@@ -383,7 +322,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 imgUrl(imgURL, title,classify,role,intro);
                 Elements elements2 = element1.select("#playlist3 > div > ul > li");
 
-                System.setProperty("webdriver.chrome.driver", chromedriverPath);
+                setProperty("webdriver.chrome.driver", chromedriverPath);
                 ChromeDriver chromeDriver = new ChromeDriver();
 
                 for (Element element2 : elements2) {
@@ -410,9 +349,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                             if (endIndex != -1) {
                                 //原视频连接
                                 extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
-                                //去掉index.m3u8的视频链接
+                                //去掉index.m3u8这个后缀的视频链接
                                 String modifiedUrl = removeLastSegment(extractedUrl);
-                                //检测第一个index.m3u8是否是只有三行
+                                //检测第一个index.m3u8是只有三行的话返回thirdLine，不然返回null
                                 String thirdLine = getThirdLine(extractedUrl);
                                 String newVideoUrl;
                                 if (thirdLine == null) {
@@ -449,7 +388,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 String href1 = element2.select(".autowidth").attr("href");
                 String videoUrl = "https://v.ijujitv.cc/" + href1;
 
-                System.setProperty("webdriver.chrome.driver", chromedriverPath);
+                setProperty("webdriver.chrome.driver", chromedriverPath);
                 ChromeDriver chromeDriver = new ChromeDriver();
                 chromeDriver.get(videoUrl);
 
@@ -484,12 +423,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 next = true;
         }
     }
-
-
-
-
-
-
 
 //@Value("${chromedriverPath}")
 //public String chromedriverPath;
@@ -557,35 +490,73 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
     //图片下载
     @SneakyThrows
-    public Map<String, Object> downLoadImage(String imageUrl, String destinationPath) {
+    public Map<String, Object> downLoadImage(String imageUrl, String destinationPath, String UUID) {
         Map<String, Object> result = new HashMap<>();
+
         try {
             URL url = new URL(imageUrl);
             URLConnection connection = url.openConnection();
             connection.setUseCaches(false); // 禁用缓存
-            try (
-                    InputStream inputStream = connection.getInputStream();
-                    OutputStream outputStream = new FileOutputStream(destinationPath);
-                    DigestInputStream digestInputStream = new DigestInputStream(inputStream, MessageDigest.getInstance("MD5"))) {
 
+            // 第一次打开连接，计算MD5哈希
+            byte[] md5Bytes;
+            try (InputStream inputStream = connection.getInputStream();
+                 DigestInputStream digestInputStream = new DigestInputStream(inputStream, MessageDigest.getInstance("MD5"))
+            ){
                 byte[] bytes = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = digestInputStream.read(bytes)) != -1) {
-                    outputStream.write(bytes, 0, bytesRead);
+                while (digestInputStream.read(bytes) != -1) {
+                    // 读取流以计算哈希
                 }
-
-                String fileName = new File(imageUrl).getName();
-                long fileSize = new File(destinationPath).length();
-                byte[] md5Bytes = digestInputStream.getMessageDigest().digest();
-                String md5 = bytesToHex(md5Bytes);
-
-                // 将值放入Map
-                result.put("fileName", fileName);
-                result.put("fileSize", fileSize);
-                result.put("md5", md5);
-
+                md5Bytes = digestInputStream.getMessageDigest().digest();
             }
+
+            String md5 = bytesToHex(md5Bytes);
+
+            // 检查是否存在相同MD5的文件
+            Images fileByMd5 = getFileByMd5(md5);
+            String cover;
+            if (fileByMd5 != null) {
+                cover = fileByMd5.getCover();
+                boolean exist = FileUtil.exist(FILE_UPLOAD_PATH + cover.substring(cover.lastIndexOf("/") + 1));
+                if (!exist) {
+                    // 重新打开连接以下载文件
+                    connection = url.openConnection();
+                    connection.setUseCaches(false);
+                    try (InputStream downloadInputStream = connection.getInputStream();
+                         OutputStream outputStream = new FileOutputStream(destinationPath)) {
+                        byte[] bytes = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = downloadInputStream.read(bytes)) != -1) {
+                            outputStream.write(bytes, 0, bytesRead);
+                        }
+                    }
+                    cover = "http://localhost:9090/files/image/" + UUID;
+                }
+            } else {
+                // 重新打开连接以下载文件
+                connection = url.openConnection();
+                connection.setUseCaches(false);
+                try (InputStream downloadInputStream = connection.getInputStream();
+                     OutputStream outputStream = new FileOutputStream(destinationPath)) {
+                    byte[] bytes = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = downloadInputStream.read(bytes)) != -1) {
+                        outputStream.write(bytes, 0, bytesRead);
+                    }
+                }
+                cover = "http://localhost:9090/files/image/" + UUID;
+            }
+
+            String fileName = new File(imageUrl).getName();
+            long fileSize = new File(destinationPath).length();
+
+            // 将值放入Map
+            result.put("cover", cover);
+            result.put("fileName", fileName);
+            result.put("fileSize", fileSize);
+            result.put("md5", md5);
             return result;
+
         } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
@@ -593,19 +564,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     }
 
 
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
-    }
 
     //所以图片的集合
     public void imgUrl(String imgUrl,String title ,String classify ,String role,String intro){
 
         String folderPath = FILE_UPLOAD_PATH;
-        java.io.File file=new java.io.File(folderPath);
+        File file=new File(folderPath);
         if (!file.exists()){
             file.mkdirs();
         }
@@ -617,21 +581,22 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                  type = "jpg";
             }
             String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + type;
-            String destinationPath = folderPath + java.io.File.separator + UUID; // 本地文件路径
+            String destinationPath = folderPath+ java.io.File.separator + UUID; // 本地文件路径
             // 将反斜杠替换为正斜杠
             String destinationPaths = destinationPath.replaceAll("\\\\", "/");
-            System.out.println("==="+destinationPaths);
+            out.println("==="+destinationPaths);
             try {
                 String  url="http://localhost:9090/files/image/"+UUID;
                 //下载
 
-                Map<String, Object> stringObjectMap = downLoadImage(imgUrl, destinationPaths);
+                Map<String, Object> stringObjectMap = downLoadImage(imgUrl, destinationPaths,UUID);
                 String fileName = (String) stringObjectMap.get("fileName");
                 long fileSize = (long) stringObjectMap.get("fileSize");
                 String md5 = (String) stringObjectMap.get("md5");
-
+                String cover = (String) stringObjectMap.get("cover");
+                out.println("========================================="+cover);
                 Images images=new Images();
-                images.setCover(url);
+                images.setCover(cover);
                 images.setSize(fileSize);
                 images.setOriginalFilename(fileName);
                 images.setType(type);
@@ -644,52 +609,34 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 details.setName(title);
                 details.setClassify(classify);
                 details.setActors(role);
-                details.setCover(url);
+                details.setCover(cover);
                 details.setActors(role);
                 details.setCollect("1000");
                 details.setQuantity("2000");
                 detailsMapper.insert(details);
-                System.out.println("Image downloaded successfully: " + destinationPaths);
+                out.println("Image downloaded successfully: " + destinationPaths);
             } catch (Exception e) {
-                System.err.println("Error downloading image: " + e.getMessage());
+                err.println("Error downloading image: " + e.getMessage());
         }
     }
-    private Details getFileByMd5(String md5) {
-        QueryWrapper<Details> queryWrapper= new QueryWrapper<>();
+    private Images getFileByMd5(String md5) {
+        QueryWrapper<Images> queryWrapper= new QueryWrapper<>();
         queryWrapper.eq("md5",md5);
-        List<Details> filesList=detailsMapper.selectList(queryWrapper);
+        List<Images> filesList=imagesMapper.selectList(queryWrapper);
         return filesList.size() == 0 ? null : filesList.get(0);
 
     }
 
-    public void  videoUrl(String modifiedUrl, String videoUrl,String title,Runnable onComplete,Elements elements, ChromeDriver chromeDriver){
-        List<String> videoList =new ArrayList<>();
-        List<String> titleList =new ArrayList<>();
-        List<String> modifiedUrlList =new ArrayList<>();
-        videoList.add(videoUrl);
-        titleList.add(title);
-        modifiedUrlList.add(modifiedUrl);
-        for (int i=0;i<videoList.size();i++){
-            String m3u81 = videoList.get(i);
-            String title1 = titleList.get(i);
-            String modifiedUrl1 = modifiedUrlList.get(i);
-            //第一个index.m3u8文件中第三行，也就是第二个文件的不同后缀
-            String thirdLine = getThirdLine(m3u81);
-            String NewVideoUrl;
-            if (thirdLine ==null){
-                 NewVideoUrl=m3u81;
-            }else {
-                //第二个index.m3u8的url
-                 NewVideoUrl=modifiedUrl1+thirdLine;
-            }
-
-//            System.out.println(title1+":"+NewVideoUrl);
-//            M3u8Main.downloadM3u8Video(NewVideoUrl, title1, onComplete); // 触发回调函数
-
-        }
+    private FileOne getVideoByMd5(String md5) {
+        QueryWrapper<FileOne> queryWrapper= new QueryWrapper<>();
+        queryWrapper.eq("md5",md5);
+        List<FileOne> filesList=fileMapper.selectList(queryWrapper);
+        return filesList.size() == 0 ? null : filesList.get(0);
 
     }
 
+    //这个方法的作用就是检测这个视频是有一个索引文件还是有两个，
+    // 一个的话第一个就是有切片文件的，两个文件第二个才是索引文件，要获取第一个索引文件第三行拼成第二行请求url
     public static String getThirdLine(String urlpath) {
         try {
             URL url = new URL(urlpath);
@@ -716,12 +663,39 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         }
         return null;
     }
+
+    // 去掉index.m3u8这个后缀的视频链接
     public static String removeLastSegment(String original) {
         int lastSlashIndex = original.lastIndexOf("/");
         if (lastSlashIndex != -1) {
             return original.substring(0, lastSlashIndex + 1);
         }
         return original;
+    }
+
+    // 辅助方法：将中文标题转换为拼音
+    public static String convertToPinyin(String chinese) {
+        StringBuilder pinyin = new StringBuilder();
+        for (char c : chinese.toCharArray()) {
+            if (Character.toString(c).matches("[\\u4E00-\\u9FA5]+")) {
+                String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
+                if (pinyinArray != null && pinyinArray.length > 0) {
+                    // 拼接所有拼音结果（去除声调）
+                    pinyin.append(pinyinArray[0].replaceAll("\\d", ""));
+                }
+            } else {
+                pinyin.append(c);
+            }
+        }
+        return pinyin.toString();
+    }
+    //生成MD5
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
 }
