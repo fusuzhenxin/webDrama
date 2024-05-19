@@ -7,10 +7,12 @@ import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.SneakyThrows;
 import net.xdclass.video.common.Result;
 import net.xdclass.video.entity.FileOne;
 import net.xdclass.video.entity.Images;
 import net.xdclass.video.mapper.FileMapper;
+import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.rmi.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +34,9 @@ public class FileController {
     private FileMapper fileMapper;
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    ImagesMapper imagesMapper;
     private static final String FILE_UPLOAD_PATH = getProperty("user.dir")
             + java.io.File.separator
             + "src" + java.io.File.separator
@@ -191,17 +197,41 @@ public class FileController {
 
     //点照片上传时候已经把url返回到前端了，然后发送编辑请求
     @PostMapping("/cover")
-    private String saveCoverImages(@RequestParam MultipartFile file) throws IOException{
+    private String saveCoverImages(@RequestParam MultipartFile file,String name) throws IOException{
 
         String originalFilename= file.getOriginalFilename();
         String type= FileUtil.extName(originalFilename);
         String UUID=IdUtil.fastSimpleUUID()+StrUtil.DOT+type;
         java.io.File uploadFile = new java.io.File(FILE_UPLOAD_PATH + UUID);
-        String cover1;
 
-        file.transferTo(uploadFile);
-        cover1="http://localhost:9090/files/image/"+UUID;
-        return cover1;
+        String md5 = SecureUtil.md5(file.getInputStream());
+        String url;
+        //这是生成的MD5 不是数据库拿的
+        FileOne dbFiles = getFileByMd5(md5);
+        if (dbFiles != null) {
+            //检查服务器上是否已经存在对应的文件。如果不存在，则将文件保存到服务器上，并设置 URL。
+            url = dbFiles.getUrl();
+            //检查服务器上是否存在特定文件的。它的逻辑是从一个完整的URL中提取文件名，然后检查服务器上指定路径下是否存在这个文件。
+            boolean exist = FileUtil.exist(FILE_UPLOAD_PATH + url.substring(url.lastIndexOf("/") + 1));
+            if (!exist) {
+                file.transferTo(uploadFile);
+                url = "http://localhost:9090/files/image/" + UUID;
+            }
+        } else {
+            //上传到静态资源
+            file.transferTo(uploadFile);
+            url = "http://localhost:9090/files/image/" + UUID;
+        }
+        long size = file.getSize();
+        Images images=new Images();
+        images.setCover(url);
+        images.setName(name);
+        images.setSize(size);
+        images.setType(type);
+        images.setOriginalFilename(originalFilename);
+        images.setMd5(md5);
+        imagesMapper.insert(images);
+        return url;
     }
 
     //删除原有图片
@@ -217,6 +247,12 @@ public class FileController {
         boolean deleted = deleteImage(url);
 
         if (deleted) {
+            try {
+                imagesMapper.deleteImagsUrl(cover);
+
+            }catch (Exception e) {
+                throw new ServerException("删除失败");
+            }
             return "图片删除成功";
         } else {
             return "图片删除失败";
@@ -225,6 +261,7 @@ public class FileController {
     }
 
     //删除图片方法
+    @SneakyThrows
     public static boolean deleteImage(String imageUrl) {
         // 假设 imageUrl 是文件的绝对路径
         File imageFile = new File(imageUrl);
@@ -236,8 +273,8 @@ public class FileController {
                 System.out.println("文件删除成功：" + imageUrl);
                 return true;
             } else {
-                System.out.println("文件删除失败：" + imageUrl);
-                return false;
+                throw new ServerException("文件删除失败");
+
             }
         } else {
             System.out.println("文件不存在：" + imageUrl);

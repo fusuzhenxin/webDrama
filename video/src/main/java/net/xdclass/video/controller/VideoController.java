@@ -1,10 +1,13 @@
 package net.xdclass.video.controller;
 import net.xdclass.video.common.Result;
+import net.xdclass.video.conf.DownloadProgressManager;
 import net.xdclass.video.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/videos")
@@ -40,12 +43,51 @@ public class VideoController {
         return Result.success();
     }
 
-    //短剧的爬虫接口
-    @GetMapping("/saves")
-    public Result url(@RequestParam String name){
-        videoService.saves(name);
-        return Result.success();
+
+    @GetMapping("/startDownload")
+    public String startDownload(@RequestParam String name) {
+        String taskId = UUID.randomUUID().toString();
+        new Thread(() -> {
+            try {
+                videoService.saves(name,taskId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+        return taskId;
     }
+
+    @GetMapping("/progress")
+    public SseEmitter progress(@RequestParam String taskId) {
+        SseEmitter emitter = new SseEmitter();
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Double progress = DownloadProgressManager.getProgress(taskId);
+                    if (progress != null) {
+                        emitter.send(progress);
+                        if (progress >= 100) {
+                            DownloadProgressManager.removeProgress(taskId);
+                            emitter.complete();
+                            break;
+                        }
+                    }
+                    Thread.sleep(10); // 每秒发送一次进度
+                }
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+        }).start();
+        return emitter;
+    }
+
+
+    //短剧的爬虫接口
+//    @GetMapping("/saves")
+//    public Result url(@RequestParam String name){
+//        videoService.saves(name);
+//        return Result.success();
+//    }
 
 
 }

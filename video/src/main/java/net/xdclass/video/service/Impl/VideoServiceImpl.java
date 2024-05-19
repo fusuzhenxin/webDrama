@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
+import net.xdclass.video.conf.DownloadProgressManager;
 import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.FileOne;
 import net.xdclass.video.entity.Images;
@@ -16,7 +17,6 @@ import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.FileMapper;
 import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.mapper.VideoMapper;
-import net.xdclass.video.service.DetailsService;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;
 import org.jsoup.Jsoup;
@@ -34,14 +34,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.rmi.ServerException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +105,8 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     private AtomicInteger downloadedEpisodes1 = new AtomicInteger(1); // 已下载的集数计数器
     private WebDriver chromeDriver; // 用于关闭ChromeDriver
 
-    public void saves(String name) {
+    @SneakyThrows
+    public void saves(String name, String taskId) {
         try {
 
                 String urls = "https://www.kuaikaw.cn/search/?searchValue=" + name;
@@ -147,7 +148,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                             if (downloadedEpisodes.get() >= 5) { // 限制下载5集
                                 out.println("已下载5集，结束下载。");
                                 downloadedEpisodes.set(0);
-                                return;
+                                break; // 继续下一个剧
                             }
                             //每一集页面url
                             String href1 = element2.select("a.pcDrama_catalogItem__4Q_C0").attr("href");
@@ -164,22 +165,24 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                 //视频url
                                 String Url = element3.getAttribute("src");
                                 out.println(Url);
-                                download(Url, title, () -> {
-                                    if (downloadedEpisodes.incrementAndGet() >= 5) {
-                                        chromeDriver.close();
-                                    }
-                                });
+                                    download(Url, title, taskId ,() -> {
+                                        // 重置进度
+                                        DownloadProgressManager.setProgress(taskId, 0);
+                                        if (downloadedEpisodes.incrementAndGet() >= 5) {
+                                            chromeDriver.close();
+                                        }
+                                    });
                             }
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        }finally {
+            chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
         }
     }
 
     @SneakyThrows
-    public  void download(String url, String title,  Runnable onComplete) throws IOException {
+    public  void download(String url, String title,String taskId,  Runnable onComplete) throws IOException {
 
         // 将标题转换为拼音
         String pinyin = convertToPinyin(title);
@@ -193,46 +196,43 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + "mp4";
         String destinationPath = destDir + File.separator + UUID; // 本地文件路径
         URL videoUrl = new URL(url);
+
+
+
+        // 获取文件大小
+        HttpURLConnection connection = (HttpURLConnection) videoUrl.openConnection();
+        connection.setRequestMethod("HEAD");
+        long totalSize = connection.getContentLengthLong();
+        connection.disconnect();
+
         long fileSize = 0;
-        byte[] mdBytes;
+        MessageDigest md5Digest = MessageDigest.getInstance("MD5");
         try (InputStream is = videoUrl.openStream();
              FileOutputStream fos = new FileOutputStream(destinationPath)) {
             int len;
             byte[] buffer = new byte[1024];
+            long downloadedSize = 0;
             while ((len = is.read(buffer)) != -1) {
 
+                downloadedSize += len; // 更新已下载大小
+                fileSize += len; // 更新文件大小
+                md5Digest.update(buffer, 0, len);
+
+
             }
-            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-            mdBytes = md5Digest.digest();
         }
-            String md5 = bytesToHex(mdBytes);
+            String md5 = bytesToHex(md5Digest.digest());
             FileOne videoByMd5 = getVideoByMd5(md5);
             String VideoUrl;
             if (videoByMd5!=null){
                 VideoUrl = videoByMd5.getUrl();
                 boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 +pinyin+File.separator+ VideoUrl.substring(VideoUrl.lastIndexOf("/") + 1));
                 if (!exist){
-                    try (InputStream down = videoUrl.openStream();
-                         FileOutputStream fos = new FileOutputStream(destinationPath)) {
-                        int len;
-                        byte[] buffer = new byte[1024];
-                        while ((len = down.read(buffer)) != -1) {
-                            fos.write(buffer, 0, len);
-                            fileSize += len;
-                        }
-                    }
+                    downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize,totalSize,taskId);
                     VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
                 }
             }else {
-                try (InputStream down = videoUrl.openStream();
-                     FileOutputStream fos = new FileOutputStream(destinationPath)) {
-                    int len;
-                    byte[] buffer = new byte[1024];
-                    while ((len = down.read(buffer)) != -1) {
-                        fos.write(buffer, 0, len);
-                        fileSize += len;
-                    }
-                    }
+                downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize,totalSize,taskId);
                 VideoUrl="http://localhost:9090/files/video/"+pinyin+ "/" + UUID;
             }
 
@@ -254,6 +254,28 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             onComplete.run();
             out.println("下载成功");
         }
+    private void downloadAndSaveFile(URL videoUrl, String destinationPath, MessageDigest md5Digest, long fileSize,long totalSize,String taskId) throws IOException {
+        try (InputStream down = videoUrl.openStream();
+             FileOutputStream fos = new FileOutputStream(destinationPath)) {
+            int len;
+            byte[] buffer = new byte[1024];
+            long downloadedSize = 0;
+            while ((len = down.read(buffer)) != -1) {
+                fos.write(buffer, 0, len);
+                downloadedSize += len; // 更新已下载大小
+                fileSize += len; // 确保文件大小被正确更新
+                md5Digest.update(buffer, 0, len);
+
+                // 计算进度并发送到前端
+                double progress = (double) downloadedSize / totalSize * 100;
+                DecimalFormat df = new DecimalFormat("#.###");
+                progress = Double.parseDouble(df.format(progress));
+                DownloadProgressManager.setProgress(taskId, progress);
+                out.println(progress);
+            }
+        }
+    }
+
 
     private Integer getDetailsId(String name) {
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();

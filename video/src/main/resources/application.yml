@@ -12,7 +12,13 @@ spring:
     multipart:
       max-file-size: 120MB
       max-request-size: 120MB
-
+logging:
+  level:
+    net:
+      xdclass:
+        video:
+          conf:
+            ProgressWebSocketHandler=DEBUG:
 #  mvc:
 #    # URL响应地址（Springboot默认为/**)
 #    static-path-pattern: /files/**

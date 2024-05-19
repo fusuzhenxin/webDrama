@@ -110,6 +110,7 @@
           <el-upload
             action="http://localhost:9090/file/cover"
             ref="coverUpload"
+            :data="getUploadData"
             :before-upload="beforeCoverUpload"
             @success="handleImgUploadSuccess"
           >
@@ -149,9 +150,9 @@ const pageSize = ref(5);
 const dialogVisible = ref(false);
 const tableData = ref([]);
 const multipleSelection = ref([]);
-const name = ref("");
 const classify = ref("");
 const NewCover=ref("");
+const NewName=ref("")
 const form = ref({
   name: "",
   classify: "",
@@ -163,6 +164,13 @@ const form = ref({
 onMounted(() => {
   loadFilePage();
 });
+const getUploadData = () => {
+  console.log(NewName.value,"====");
+  return {
+    name: NewName.value, // Dynamic value of name
+  };
+
+};
 
 const truncateString = (str, maxLength) => {
   if (!str) return "";
@@ -280,6 +288,7 @@ const delBatch = async () => {
 const handEdit = (row) => {
   form.value = { ...row };
   NewCover.value=form.value.cover
+  NewName.value=form.value.name
   console.log("====",form.value.cover);
   dialogVisible.value = true;
 };

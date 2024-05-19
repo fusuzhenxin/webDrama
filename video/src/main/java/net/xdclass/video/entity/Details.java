@@ -19,5 +19,4 @@ public class Details {
     private String quantity;
     private String collect;
     private String cover;
-    private String md5;
 }

@@ -13,5 +13,5 @@ public interface VideoService extends IService<Video> {
 
     void saveList(String name, String classify);
 
-    void saves(String name);
+    void saves(String name,String taskId);
 }
