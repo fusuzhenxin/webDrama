@@ -123,12 +123,6 @@ import java.io.File;
 
 import static java.lang.System.getProperty;
 
-/**
- * @author liyaling
- * @email ts_liyaling@qq.com
- * @date 2019/12/14 16:02
- */
-
 public class M3u8Main {
 
 
@@ -153,13 +147,14 @@ public class M3u8Main {
         //视频源文件
         m3u8Download.setOriginal(extractedUrl);
         //视频名称
+
         m3u8Download.setName(title);
-        //设置线程数
-        m3u8Download.setThreadCount(100);
+        //设置线程
+        m3u8Download.setThreadCount(10);
         //设置重试次数
-        m3u8Download.setRetryCount(100);
+        m3u8Download.setRetryCount(5);
         //设置连接超时时间（单位：毫秒）
-        m3u8Download.setTimeoutMillisecond(10000L);
+        m3u8Download.setTimeoutMillisecond(1000L);
         /*
         设置日志级别
         可选值：NONE INFO DEBUG ERROR
@@ -167,12 +162,7 @@ public class M3u8Main {
         m3u8Download.setLogLevel(Constant.INFO);
         //设置监听器间隔（单位：毫秒）
         m3u8Download.setInterval(500L);
-        //添加额外请求头
-      /*  Map<String, Object> headersMap = new HashMap<>();
-        headersMap.put("Content-Type", "text/html;charset=utf-8");
-        m3u8Download.addRequestHeaderMap(headersMap);*/
-        //如果需要的话设置http代理
-        //m3u8Download.setProxy("172.50.60.3",8090);
+        m3u8Download.setRunnable(onComplete);
         //添加监听器
         m3u8Download.addListener(new DownloadListener() {
             @Override
@@ -193,7 +183,9 @@ public class M3u8Main {
             @Override
             public void end() {
                 System.out.println("下载完毕");
-                onComplete.run(); // 下载完成后执行回调函数
+                m3u8Download.mergeAndCleanUpFiles(()->{
+                    onComplete.run();
+                });
             }
         });
         //开始下载

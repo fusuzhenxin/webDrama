@@ -2,6 +2,9 @@ package net.xdclass.video;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import lombok.SneakyThrows;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -14,6 +17,11 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.devtools.DevTools;
+
+import org.openqa.selenium.devtools.v124.network.Network;
+import org.openqa.selenium.devtools.v124.network.model.RequestId;
+import org.openqa.selenium.devtools.v124.network.model.Response;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,12 +34,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.System.getProperty;
-import static java.lang.System.setProperty;
+import static java.lang.System.*;
 
 @SpringBootTest
 class VideoApplicationTests {
@@ -363,51 +371,49 @@ class VideoApplicationTests {
     void crawlGetTest2() {
 
 
-
-
 //            String HomeUrl="https://v.ijujitv.cc/show/9--------"+page+"---.html";
-            //最外层url
-            String HomeUrl = "https://www.naifei.art/vodtype/ribenju-2.html";
-            Document document = Jsoup.connect(HomeUrl).get();
-            //最外层类名
-            Elements elements = document.getElementsByClass("module-item");
-            //遍历每一部剧
-            for (Element element : elements) {
-                //跳转到每一个剧的详情页的urL,第二层url
-                String href = element.select("a").attr("href");
+        //最外层url
+        String HomeUrl = "https://www.naifei.art/vodtype/ribenju-2.html";
+        Document document = Jsoup.connect(HomeUrl).get();
+        //最外层类名
+        Elements elements = document.getElementsByClass("module-item");
+        //遍历每一部剧
+        for (Element element : elements) {
+            //跳转到每一个剧的详情页的urL,第二层url
+            String href = element.select("a").attr("href");
 
-                Document document1 = Jsoup.connect(href).get();
-                //第二层的整个页面类名，可以爬取图片和名称，详情，用选择器才能一步一步往里取类名，直接类名是不能往里套的
-                Elements elements1 = document1.select(".content");
+            Document document1 = Jsoup.connect(href).get();
+            //第二层的整个页面类名，可以爬取图片和名称，详情，用选择器才能一步一步往里取类名，直接类名是不能往里套的
+            Elements elements1 = document1.select(".content");
 
-                //遍历每一个 详情页
-                for (Element element1 : elements1) {
-                    //详情，名称,封面
-                    String title = element1.select("h1.page-title").text();
-                    String img = element1.select("img").attr("src");
+            //遍历每一个 详情页
+            for (Element element1 : elements1) {
+                //详情，名称,封面
+                String title = element1.select("h1.page-title").text();
+                String img = element1.select("img").attr("src");
 
-                    Elements elements2 = element1.select("#sort-item-7 a");
-                   // 设置驱动地址
-                    setProperty("webdriver.chrome.driver", chromedriverPath);
-                    ChromeDriver chromeDriver = new ChromeDriver();
-                    chromeDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS); // 设置等待时间
-                    for (Element element2 : elements2) {
-                        //跳转到每一集里面的url界面
-                        String text = element2.attr("title");
-                        String href1 = element2.attr("href");
-                        String videoUrl = "https://www.naifei.art" + href1;
+                Elements elements2 = element1.select("#sort-item-7 a");
+                // 设置驱动地址
+                setProperty("webdriver.chrome.driver", chromedriverPath);
+                ChromeDriver chromeDriver = new ChromeDriver();
+                chromeDriver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS); // 设置等待时间
+                for (Element element2 : elements2) {
+                    //跳转到每一集里面的url界面
+                    String text = element2.attr("title");
+                    String href1 = element2.attr("href");
+                    String videoUrl = "https://www.naifei.art" + href1;
 
 
-                        chromeDriver.get(videoUrl);
-                        List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
-                        for (WebElement element3 : elements3) {
-                            //视频url
-                            String VideoUrl = element3.getAttribute("src");
+                    chromeDriver.get(videoUrl);
+                    List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
+                    for (WebElement element3 : elements3) {
+                        //视频url
+                        String VideoUrl = element3.getAttribute("src");
 
-                            System.out.println(VideoUrl);
-                        }
+                        System.out.println(VideoUrl);
                     }
                 }
+            }
 
 
         }
@@ -415,28 +421,88 @@ class VideoApplicationTests {
 
     @Test
     void crawlGetTest3() {
-        //设置驱动地址
-        setProperty("webdriver.chrome.driver", chromedriverPath);
-        ChromeDriver chromeDriver = new ChromeDriver();
-        chromeDriver.get("https://www.naifei.art/vodtype/ribenju-2.html");
-        WebElement element = chromeDriver.findElement(By.cssSelector("#playleft > iframe"));
-        String src = element.getAttribute("src");
-        System.out.println(src);
+        // 设置ChromeDriver的路径
+        System.setProperty("webdriver.chrome.driver", chromedriverPath);
+
+        // 设置Chrome选项
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless"); // 无头模式，不显示浏览器界面
+        options.addArguments("--disable-gpu"); // 禁用GPU加速
+        options.addArguments("--no-sandbox"); // 以非沙盒模式启动
+        options.addArguments("--disable-dev-shm-usage"); // 解决资源受限的问题
+
+        // 创建ChromeDriver对象
+        WebDriver driver = new ChromeDriver(options);
+
+        try {
+            // 打开网页
+            driver.get("https://v.ijujitv.cc/play/35236-2-1.html8");
+
+            // 等待几秒以确保页面完全加载和JavaScript执行完成
+            Thread.sleep(5000); // 等待5秒
+
+            // 获取渲染后的页面内容
+            String content = driver.getPageSource();
+            System.out.println(content);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭浏览器
+            driver.quit();
+        }
     }
 
     @SneakyThrows
     @Test
+
     void crawlGetTest4() {
-        String url = "9a4f3ba5dfcc45268fe39303b002224c.jpg%3Ft%3D1692682999263%26imageView2%2F0%2Fw%2F200%2Fh%2F267&w=640&q=75";
+        // 设置ChromeDriver的路径
+        System.setProperty("webdriver.chrome.driver", chromedriverPath);
 
-        String type = url.substring(url.lastIndexOf(".") + 1);
+        // 设置Chrome选项
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless"); // 无头模式
 
-        if (type.length() > 4) {
-            type = "jpg";
+        // 初始化WebDriver
+        WebDriver driver = new ChromeDriver(options);
+
+        // 启用DevTools
+        DevTools devTools = ((ChromeDriver) driver).getDevTools();
+        devTools.createSession();
+
+        // 启用网络跟踪
+        devTools.send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()));
+
+        // 监听网络响应
+        devTools.addListener(Network.responseReceived(), responseReceived -> {
+            Response response = responseReceived.getResponse();
+            RequestId requestId = responseReceived.getRequestId();
+            if (response.getUrl().contains("desired_endpoint")) { // 检查请求的URL
+                String responseBody = devTools.send(Network.getResponseBody(requestId)).getBody();
+                System.out.println("URL: " + response.getUrl());
+                System.out.println("Status: " + response.getStatus());
+                System.out.println("Response: " + responseBody);
+            }
+        });
+
+        try {
+            // 打开网页
+            driver.get("https://v.ijujitv.cc/play/35236-2-1.html");
+
+            // 等待页面加载
+            WebElement dynamicElement = new WebDriverWait(driver, Duration.ofSeconds(30))
+                    .until(ExpectedConditions.presenceOfElementLocated(By.id("dynamicContentId")));
+
+            // 获取页面源代码
+            String pageSource = driver.getPageSource();
+            System.out.println(pageSource);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭浏览器
+            driver.quit();
         }
-
-        System.out.println(type);
-
     }
-
 }

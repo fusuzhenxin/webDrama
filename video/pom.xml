@@ -34,16 +34,26 @@
             <version>1.14.3</version>
         </dependency>
 
-        <!-- 添加Selenium依赖 -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.19.1</version>
+            <version>4.21.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-devtools-v124</artifactId> <!-- NN是你的Chrome浏览器版本号 -->
+            <version>4.21.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>2.54.0</version>
         </dependency>
 
         <dependency>
@@ -58,12 +68,6 @@
             <version>2.5.1</version>
         </dependency>
 
-        <!--        <dependency>-->
-<!--            <groupId>org.seleniumhq.selenium</groupId>-->
-<!--            <artifactId>selenium-java</artifactId>-->
-<!--            <version>3.141.59</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -75,31 +79,11 @@
             <artifactId>hutool-all</artifactId>
             <version>5.8.25</version>
         </dependency>
+
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.25</version>
-        </dependency>
-
-
-            <!-- Apache HttpComponents Core -->
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpcore</artifactId>
-                <version>4.4.14</version>
-            </dependency>
-            <!-- Apache HttpComponents Client -->
-            <dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.5.13</version>
-            </dependency>
-
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
@@ -113,17 +97,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis-spring</artifactId>
             <version>3.0.3</version>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>org.seleniumhq.selenium</groupId>-->
-<!--            <artifactId>selenium-java</artifactId>-->
-<!--            <version>4.18.1</version>-->
-<!--        </dependency>-->
 
         <!-- 自动读取配置文件，赋值给成员变量依赖 -->
         <dependency>
@@ -131,10 +110,28 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
         </dependency>
+
+        <!-- Apache HttpComponents Core -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.14</version>
+        </dependency>
+
+        <!-- Apache HttpComponents Client -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+
     </dependencies>
 
     <build>

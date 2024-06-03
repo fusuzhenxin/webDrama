@@ -68,9 +68,14 @@ const listenProgress = () => {
       downloadedEpisodes.value += 1;
       percentage.value = 0;
       console.log("Total episodes downloaded:", downloadedEpisodes.value);
+      if (downloadedEpisodes.value==5) {
+        downloadedEpisodes.value=0
+        
+      }
       // 如果所有集数已下载完成，关闭 SSE 连接
       if (downloadedEpisodes.value >= totalEpisodes.value) {
-        eventSource.close();
+        totalProgress.value=0
+        // eventSource.close();
         console.log("All episodes downloaded");
       }
     } else {

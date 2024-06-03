@@ -67,9 +67,7 @@ public class VideoController {
                     if (progress != null) {
                         emitter.send(progress);
                         if (progress >= 100) {
-                            DownloadProgressManager.removeProgress(taskId);
-                            emitter.complete();
-                            break;
+                            DownloadProgressManager.setProgress(taskId, 0);
                         }
                     }
                     Thread.sleep(10); // 每秒发送一次进度

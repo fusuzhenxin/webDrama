@@ -36,3 +36,4 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 chromedriverPath : F:\\chromedriver\\chromedriver.exe
+phantomJSDriver :  F:\\phantomjs-2.1.1-windows\\phantomjs-2.1.1-windows\\bin\\phantomjs.exe

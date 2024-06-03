@@ -14,6 +14,7 @@ public class StringUtils {
         return str == null || str.length() == 0;
     }
 
+    //使用 str.trim() 去除字符串 str 两端的空格。
     public static boolean isEmpty(String str) {
         return str == null || str.trim().length() == 0;
     }
@@ -27,6 +28,7 @@ public class StringUtils {
     }
 
     public static boolean isUrl(String str) {
+        //使用 isEmpty(str) 方法检查输入字符串 str 是否为空。如果为空，则返回 false。
         if (isEmpty(str))
             return false;
         str = str.trim();
