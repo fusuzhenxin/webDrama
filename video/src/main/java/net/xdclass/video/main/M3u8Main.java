@@ -120,6 +120,7 @@ import net.xdclass.video.service.Impl.FileServiceImpl;
 import net.xdclass.video.utils.Constant;
 
 import java.io.File;
+import java.util.concurrent.Semaphore;
 
 import static java.lang.System.getProperty;
 
@@ -135,7 +136,7 @@ public class M3u8Main {
             + File.separator
             + "files" + File.separator
             + "video" + File.separator;
-    public static void downloadM3u8Video(String M3U8URL,String title  ,String extractedUrl ,Integer detailsId, FileService fileService,Runnable onComplete) {
+    public static void downloadM3u8Video(String M3U8URL, String title  , String extractedUrl , Integer detailsId, FileService fileService) {
         String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT;
 
         M3u8DownloadFactory.M3u8Download m3u8Download = M3u8DownloadFactory.getInstance(M3U8URL, fileService);
@@ -164,7 +165,7 @@ public class M3u8Main {
         m3u8Download.setLogLevel(Constant.INFO);
         //设置监听器间隔（单位：毫秒）
         m3u8Download.setInterval(500L);
-        m3u8Download.setRunnable(onComplete);
+//        m3u8Download.setRunnable(onComplete);
         //添加监听器
         m3u8Download.addListener(new DownloadListener() {
             @Override
@@ -186,7 +187,7 @@ public class M3u8Main {
             public void end() {
                 System.out.println("下载完毕");
                 m3u8Download.mergeAndCleanUpFiles(()->{
-                    onComplete.run();
+//                    onComplete.run();
                 });
             }
         });

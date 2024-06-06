@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.xdclass.video.conf.DownloadProgressManager;
-import net.xdclass.video.download.M3u8DownloadFactory;
 import net.xdclass.video.entity.*;
 import net.xdclass.video.listener.DownloadListener;
 import net.xdclass.video.main.M3u8Main;
@@ -18,8 +17,6 @@ import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.mapper.VideoMapper;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;
-import net.xdclass.video.utils.Log;
-import net.xdclass.video.utils.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -36,7 +33,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.math.BigDecimal;
 import java.net.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -88,6 +84,11 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(100));
 
     private Set<DownloadListener> listenerSet = new HashSet<>();
+
+    Semaphore semaphore=new Semaphore(1);
+
+    webDrama webDrama=new webDrama();
+
     @Override
     public Integer seleteDiversitys(String name) {
         return videoMapper.seleteDiversitys(name);
@@ -115,7 +116,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
           final BlockingQueue<MyData> blockingQueue=new LinkedBlockingQueue<>(20);
          producer=new Thread(()->{
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // Set Chrome to run in headless mode
+//        options.addArguments("--headless"); // Set Chrome to run in headless mode
         chromeDriver = new ChromeDriver(options);
         try {
 
@@ -182,7 +183,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 //                                }
 //                            });
 
-                            //把下载url存到一个数组然后通过线程池来下载，同时下载多个视频
+                            //然后通过线程池来下载，同时下载多个视频
 
                             downloadedEpisodes.incrementAndGet();
                             MyData myData = new MyData();
@@ -304,6 +305,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                             }
                             });
                 }
+            threadPoolExecutor.shutdown();
         });
 
 
@@ -316,8 +318,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
         }catch (Exception e){
             e.printStackTrace();
-        }finally {
-            threadPoolExecutor.shutdown();
         }
 
     }
@@ -461,143 +461,185 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
     @SneakyThrows
     public void saveList(String name, String classify) {
-        try {
-            String urls = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
-            out.println("正在爬取：" + urls);
-            // 最外面的url
-            Document document = Jsoup.connect(urls).get();
-            Elements element = document.select(".m-item");
-            for (Element elements : element) {
-                // 第二页详情页url
-                String href = elements.select("a.thumb").attr("href");
-                String url1 = "https://v.ijujitv.cc/" + href;
-                Document document1 = Jsoup.connect(url1).get();
+        final ArrayBlockingQueue<webDrama> queue=new ArrayBlockingQueue<>(5);
+        producer=new Thread(()-> {
+                        try {
+                            String urls = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
+                            out.println("正在爬取：" + urls);
+                            // 最外面的url
+                            Document document = Jsoup.connect(urls).get();
+                            Elements element = document.select(".m-item");
+                            for (Element elements : element) {
+                                // 第二页详情页url
+                                String href = elements.select("a.thumb").attr("href");
+                                String url1 = "https://v.ijujitv.cc/" + href;
+                                Document document1 = Jsoup.connect(url1).get();
 
-                Elements elements1 = document1.select(".main-inner");
-                for (Element element1 : elements1) {
-                    String role;
-                    // 剧名
-                    String title = element1.select("h1.title").text();
+                                Elements elements1 = document1.select(".main-inner");
+                                for (Element element1 : elements1) {
+                                    String role;
+                                    // 剧名
+                                    String title = element1.select("h1.title").text();
 
-                    // 图片url
-                    String imgUrl = element1.select("img").attr("data-original");
-                    // 主演
-                    String actors = element1.select("p:nth-child(5) > a").text();
-                    String url = "https://v.ijujitv.cc/" + imgUrl;
-                    // 详情
-                    String intro = element1.select("div.albumDetailMain-right > p").text();
-                    // 去除简介部分
-                    String details = intro.replaceFirst("^简介：\\s*", "");
+                                    // 图片url
+                                    String imgUrl = element1.select("img").attr("data-original");
+                                    // 主演
+                                    String actors = element1.select("p:nth-child(5) > a").text();
+                                    String url = "https://v.ijujitv.cc/" + imgUrl;
+                                    // 详情
+                                    String intro = element1.select("div.albumDetailMain-right > p").text();
+                                    // 去除简介部分
+                                    String details = intro.replaceFirst("^简介：\\s*", "");
 
-                    if (actors == null) {
-                        role = "";
-                    } else {
-                        role = actors;
-                    }
-                    out.println(url + ":" + title + ":" + details + ":" + classify);
-                    imgUrl(url, title, classify, role, details);
-                    // 分集类名
-                    Elements elements2 = element1.select("#playlist3 > div > ul > li");
-
-                    for (Element element2 : elements2) {
-                        if (downloadedEpisodes1.get() >= 1) { // 限制下载3集
-                            out.println("已下载3集，结束下载。");
-                            downloadedEpisodes1.set(0); // 重置计数器
-                            break; // 继续下一个剧
-                        }
-                        // 每一集页面url
-                        String href1 = element2.select(".autowidth").attr("href");
-                        String videoUrl = "https://v.ijujitv.cc/" + href1;
-
-                        // 判断是否是需要跳过的链接
-                        if ("https://v.ijujitv.cc//m.nwtef.xyz/dl/index.html?sc=1001_dc_xk&srcPlay=play".equals(videoUrl)) {
-                            continue; // 跳过当前循环
-                        }
-
-                        setProperty("webdriver.chrome.driver", chromedriverPath);
-                        ChromeDriver chromeDriver = new ChromeDriver();
-                        // Navigate to the video URL
-                        chromeDriver.get(videoUrl);
-
-                        // 等待页面加载完成
-                        waitForPageLoad(chromeDriver);
-
-                        List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
-                        //是null就直接跳出
-                        for (WebElement element3 : elements3) {
-                            String extractedUrl = null;
-                            String newVideoUrl = null;
-                            String VideoUrl = element3.getAttribute("src");
-                            int startIndex = VideoUrl.indexOf("url=");
-                            if (startIndex != -1) {
-                                extractedUrl = VideoUrl.substring(startIndex + "url=".length());
-                                int endIndex = extractedUrl.indexOf(".m3u8");
-                                if (endIndex != -1) {
-                                    // 原视频连接
-                                    extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
-                                    // 去掉index.m3u8这个后缀的视频链接
-                                    String modifiedUrl = removeLastSegment(extractedUrl);
-                                    // 检测第一个index.m3u8是只有三行的话返回thirdLine，不然返回null
-                                    String thirdLine = getThirdLine(extractedUrl);
-
-                                    if (thirdLine == null) {
-                                        newVideoUrl = extractedUrl;
+                                    if (actors == null) {
+                                        role = "";
                                     } else {
-                                        newVideoUrl = modifiedUrl + thirdLine;
+                                        role = actors;
                                     }
-                                }
-                            }
+                                    out.println(url + ":" + title + ":" + details + ":" + classify);
+                                    imgUrl(url, title, classify, role, details);
+                                    // 分集类名
+                                    Elements elements2 = element1.select("#playlist3 > div > ul > li");
 
-                            Integer detailsId = getDetailsId(title);
-                            // Synchronously download the video with callback
-                            boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl,detailsId);
+                                    for (Element element2 : elements2) {
+                                        if (downloadedEpisodes1.get() >= 2) { // 限制下载3集
+                                            out.println("已下载3集，结束下载。");
+                                            downloadedEpisodes1.set(0); // 重置计数器
+                                            break; // 继续下一个剧
+                                        }
+                                        // 每一集页面url
+                                        String href1 = element2.select(".autowidth").attr("href");
+                                        String videoUrl = "https://v.ijujitv.cc/" + href1;
 
-                            if (downloadSuccess) {
-                                // Increment the episode count after successful download
-                                downloadedEpisodes1.incrementAndGet();
-                            }
+                                        // 判断是否是需要跳过的链接
+                                        if ("https://v.ijujitv.cc//m.nwtef.xyz/dl/index.html?sc=1001_dc_xk&srcPlay=play".equals(videoUrl)) {
+                                            continue; // 跳过当前循环
+                                        }
 
-                            // Close the ChromeDriver after each episode
-                            chromeDriver.quit();
-                            chromeDriver = null;
-                            //已下载跳出当前集视频看下载了几集
-                            break; // 处理完一个iframe后跳出
-                        }
+                                        setProperty("webdriver.chrome.driver", chromedriverPath);
+                                        ChromeDriver chromeDriver = new ChromeDriver();
+                                        // Navigate to the video URL
+                                        chromeDriver.get(videoUrl);
+
+                                        // 等待页面加载完成
+                                        waitForPageLoad(chromeDriver);
+
+                                        List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
+                                        //是null就直接跳出
+                                        for (WebElement element3 : elements3) {
+                                            String extractedUrl = null;
+                                            String newVideoUrl = null;
+                                            String VideoUrl = element3.getAttribute("src");
+                                            int startIndex = VideoUrl.indexOf("url=");
+                                            if (startIndex != -1) {
+                                                extractedUrl = VideoUrl.substring(startIndex + "url=".length());
+                                                int endIndex = extractedUrl.indexOf(".m3u8");
+                                                if (endIndex != -1) {
+                                                    // 原视频连接
+                                                    extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
+                                                    // 去掉index.m3u8这个后缀的视频链接
+                                                    String modifiedUrl = removeLastSegment(extractedUrl);
+                                                    // 检测第一个index.m3u8是只有三行的话返回thirdLine，不然返回null
+                                                    String thirdLine = getThirdLine(extractedUrl);
+
+                                                    if (thirdLine == null) {
+                                                        newVideoUrl = extractedUrl;
+                                                    } else {
+                                                        newVideoUrl = modifiedUrl + thirdLine;
+                                                    }
+                                                }
+                                            }
+
+                                            Integer detailsId = getDetailsId(title);
+                                            // Synchronously download the video with callback
+//                                boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl,detailsId);
+
+                                            webDrama webDrama=new webDrama();
+                                            webDrama.setNewVideoUrl(newVideoUrl);
+                                            webDrama.setTitle(title);
+                                            webDrama.setExtractedUrl(extractedUrl);
+                                            webDrama.setDetailsId(detailsId);
+                                            queue.put(webDrama);
+
+                                        }
 
 //                        // 检查是否已经下载了3集，跳出循环
 //                        if (downloadedEpisodes1.get() >= 2) {
 //                            break;
 //                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (chromeDriver != null) {
-                chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
-            }
-        }
-    }
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            if (chromeDriver != null) {
+                                chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
+                            }
+                            try {
+                                queue.put(null);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
 
-    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl,Integer detailsId) {
-        final boolean[] success = {false};
-        CountDownLatch latch = new CountDownLatch(1);
+                        }
+        });
+
+
+        consumer=new Thread(()->{
+            while (true) {
+                webDrama poll=null;
+                try {
+                    poll=queue.take();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if (poll==null){
+                    break;
+                }
+                        String newVideoUrl = poll.getNewVideoUrl();
+                        String extractedUrl = poll.getExtractedUrl();
+                        Integer detailsId = poll.getDetailsId();
+                        String title = poll.getTitle();
+
+
+                    M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, detailsId, fileService);
+
+                downloadedEpisodes1.incrementAndGet();
+            }
+
+        });
+        producer.start();
+        consumer.start();
 
         try {
-            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,detailsId, fileService, () -> {
-                success[0] = true;
-                latch.countDown(); // Notify the main thread after download completion
-            });
-
-            // Wait for the download to complete
-            latch.await();
-        } catch (Exception e) {
+            producer.join();
+            consumer.join();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        return success[0];
+
     }
+
+//    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl,Integer detailsId) {
+//        final boolean[] success = {false};
+//        CountDownLatch latch = new CountDownLatch(1);
+//
+//        try {
+//            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,detailsId, fileService, () -> {
+//                success[0] = true;
+//                latch.countDown(); // Notify the main thread after download completion
+//            });
+//
+//            // Wait for the download to complete
+//            latch.await();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        return success[0];
+//    }
 
     private void downloadM3u8Video(){
 
