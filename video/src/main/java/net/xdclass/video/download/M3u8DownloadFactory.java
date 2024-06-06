@@ -126,6 +126,7 @@ public class M3u8DownloadFactory {
         private String title;
         private String extractedUrl;
         public Runnable onComplete;
+        private Integer detailsId;
 
 
         /**
@@ -166,6 +167,7 @@ public class M3u8DownloadFactory {
             //执行多线程下载
             for (String s : tsSet) {
                 i++;
+                //i是给ts视频的编号
                 fixedThreadPool.execute(getThread(s, i));
             }
             fixedThreadPool.shutdown();
@@ -173,6 +175,7 @@ public class M3u8DownloadFactory {
             new Thread(() -> {
                 int consume = 0;
                 //轮询是否下载成功
+                //当 fixedThreadPool.isTerminated() 返回 true 时，说明所有任务都已完成，线程池已关闭
                 while (!fixedThreadPool.isTerminated()) {
                     try {
                         consume++;
@@ -180,6 +183,9 @@ public class M3u8DownloadFactory {
                         Thread.sleep(1000L);
                         Log.i("已用时" + consume + "秒！\t下载速度：" + StringUtils.convertToDownloadSpeed(new BigDecimal(downloadBytes.toString()).subtract(bigDecimal), 3) + "/s");
                         Log.i("\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount) + "个！");
+                       //记录下载完成的百分比：
+                        //使用 new BigDecimal(finishedCount) 将其转换为 BigDecimal 类型，以便进行高精度计算
+                        //ROUND_HALF_UP是四舍五入，multiply乘以100变成百分比
                         Log.i(new BigDecimal(finishedCount).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP) + "%");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -194,21 +200,24 @@ public class M3u8DownloadFactory {
             startListener(fixedThreadPool);
 
         }
-
         private void startListener(ExecutorService fixedThreadPool) {
             new Thread(() -> {
+                // // 通知所有监听器下载开始
                 for (DownloadListener downloadListener : listenerSet)
                     downloadListener.start();
                 //轮询是否下载成功
                 while (!fixedThreadPool.isTerminated()) {
                     try {
                         Thread.sleep(interval);
+                        //使用 for 循环是为了遍历这个集合，确保所有的监听器都能接收到最新的下载进度
                         for (DownloadListener downloadListener : listenerSet)
+                            //计算下载完成的百分比，并调用 downloadListener.process 方法通知监听器当前的下载进度。
                             downloadListener.process(DOWNLOADURL, finishedCount, tsSet.size(), new BigDecimal(finishedCount).divide(new BigDecimal(tsSet.size()), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).floatValue());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
+                //通知监听器下载结束
                 for (DownloadListener downloadListener : listenerSet)
                     downloadListener.end();
             }).start();
@@ -218,6 +227,7 @@ public class M3u8DownloadFactory {
                         BigDecimal bigDecimal = new BigDecimal(downloadBytes.toString());
                         Thread.sleep(1000L);
                         for (DownloadListener downloadListener : listenerSet)
+                            //第二个线程定期通知监听器当前的下载速度。
                             downloadListener.speed(StringUtils.convertToDownloadSpeed(new BigDecimal(downloadBytes.toString()).subtract(bigDecimal), 3) + "/s");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -226,22 +236,6 @@ public class M3u8DownloadFactory {
             }).start();
         }
 
-        // 辅助方法：将中文标题转换为拼音
-        public static String convertToPinyin(String chinese) {
-            StringBuilder pinyin = new StringBuilder();
-            for (char c : chinese.toCharArray()) {
-                if (Character.toString(c).matches("[\\u4E00-\\u9FA5]+")) {
-                    String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
-                    if (pinyinArray != null && pinyinArray.length > 0) {
-                        // 拼接所有拼音结果（去除声调）
-                        pinyin.append(pinyinArray[0].replaceAll("\\d", ""));
-                    }
-                } else {
-                    pinyin.append(c);
-                }
-            }
-            return pinyin.toString();
-    }
 
         /**
          * 合并下载好的ts片段
@@ -351,6 +345,7 @@ public class M3u8DownloadFactory {
                     files.setOriginalFilename(extractedUrl);
                     files.setType("mp4");
                     files.setMd5(md5);
+                    files.setDetailsId(detailsId);
                     files.setDiversity(String.valueOf(diversity));
                     fileService.saveFile(files);
 
@@ -409,18 +404,6 @@ public class M3u8DownloadFactory {
             return tsFiles;
         }
 
-        private long getVideoSize() {
-            long totalSize = 0;
-            try {
-                for (File f : finishedFiles) {
-                    totalSize += f.length();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return totalSize;
-        }
-
         //MD5
         private static String bytesToHex(byte[] bytes){
             StringBuilder sb = new StringBuilder();
@@ -447,6 +430,7 @@ public class M3u8DownloadFactory {
          * @param urls ts片段链接
          * @param i    ts片段序号
          * @return 线程
+         * 代码中xy后缀文件是未解密的ts片段，xyz是解密后的ts片段，这两个后缀起成什么无所谓。
          */
         private Thread getThread(String urls, int i) {
             return new Thread(() -> {
@@ -456,19 +440,23 @@ public class M3u8DownloadFactory {
                 File file2 = new File(dir + FILESEPARATOR + i + ".xy");
                 if (file2.exists())
                     file2.delete();
-                OutputStream outputStream = null;
-                InputStream inputStream1 = null;
-                FileOutputStream outputStream1 = null;
-                byte[] bytes;
+                OutputStream outputStream = null; // 输出流，用于写入未解密的 ts 片段
+                InputStream inputStream1 = null;  // 输入流，用于读取未解密的 ts 片段
+                FileOutputStream outputStream1 = null; // 输出流，用于写入解密后的 ts 片段
+                byte[] bytes; // 字节数组，用于缓冲读取的 ts 片段数据
+
                 try {
+                    // 从阻塞队列中获取字节数组为了所有线程共享字节数组，那就不用创建一个线程就创建一个字节数组，若被中断，则捕获异常
                     bytes = BLOCKING_QUEUE.take();
                 } catch (InterruptedException e) {
+                    // 如果被中断，使用默认大小的字节数组
                     bytes = new byte[Constant.BYTE_COUNT];
                 }
                 //重试次数判断
+                //
                 while (count <= retryCount) {
                     try {
-                        //模拟http请求获取ts片段文件
+                        //模拟http请求获取ts片段文件，ts片段链接
                         URL url = new URL(urls);
                         if (proxy ==null) {
                             httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -477,10 +465,12 @@ public class M3u8DownloadFactory {
                         }
                         httpURLConnection.setConnectTimeout((int) timeoutMillisecond);
                         for (Map.Entry<String, Object> entry : requestHeaderMap.entrySet())
-                            httpURLConnection.addRequestProperty(entry.getKey(), entry.getValue().toString());
+                            httpURLConnection.addRequestProperty(entry.getKey(), entry.getValue().toString());//设置请求头
                         httpURLConnection.setUseCaches(false);
-                        httpURLConnection.setReadTimeout((int) timeoutMillisecond);
+                        httpURLConnection.setReadTimeout((int) timeoutMillisecond); //设置超时
                         httpURLConnection.setDoInput(true);
+
+                        //获取输入流，读取 TS 片段数据
                         InputStream inputStream = httpURLConnection.getInputStream();
                         try {
                             outputStream = new FileOutputStream(file2);
@@ -491,21 +481,30 @@ public class M3u8DownloadFactory {
                         int len;
                         //将未解密的ts片段写入文件
                         while ((len = inputStream.read(bytes)) != -1) {
+                            //写入到file2
                             outputStream.write(bytes, 0, len);
                             synchronized (this) {
+                                //已下载文件大小
                                 downloadBytes = downloadBytes.add(new BigDecimal(len));
                             }
                         }
                         outputStream.flush();
                         inputStream.close();
+                        //读取未解密的文件
                         inputStream1 = new FileInputStream(file2);
-                        int available = inputStream1.available();
+                        int available = inputStream1.available(); //读取文件的可用字节数
+                        //如果字节数组不足以容纳文件内容就重新分配
                         if (bytes.length < available)
                             bytes = new byte[available];
+                        //把文件内容读取到字节数组中
+                        //它读取 .xy 文件中的数据，并将其写入新的 .xyz 文件中。下面是这段代码的详细解析：
                         inputStream1.read(bytes);
                         File file = new File(dir + FILESEPARATOR + i + ".xyz");
+                        // 输出流，用于写入解密后的 ts 片段
                         outputStream1 = new FileOutputStream(file);
                         //开始解密ts片段，这里我们把ts后缀改为了xyz，改不改都一样
+                        //解密方法decrypt会根据提供的密钥、IV和加密方法解密下载的TS片段数据。
+                        // 如果解密成功，将解密后的数据写入文件；否则，将原始数据写入文件。
                         byte[] decrypt = decrypt(bytes, available, key, iv, method);
                         if (decrypt == null)
                             outputStream1.write(bytes, 0, available);
@@ -521,6 +520,7 @@ public class M3u8DownloadFactory {
                         count++;
 //                        e.printStackTrace();
                     } finally {
+                        //在 finally 块中，关闭所有的输入输出流，并断开连接。将字节数组放回阻塞队列。
                         try {
                             if (inputStream1 != null)
                                 inputStream1.close();
@@ -528,6 +528,9 @@ public class M3u8DownloadFactory {
                                 outputStream1.close();
                             if (outputStream != null)
                                 outputStream.close();
+                            //添加元素，队列满了的话就等待
+                            //通过使用阻塞队列 BLOCKING_QUEUE，可以在多个线程之间共享和复用这些字节数组，避免每个线程都分配新的内存空间。
+                            //下载完一个文件后，将字节数组放回队列，其他线程可以重新使用它，从而提高内存利用效率。
                             BLOCKING_QUEUE.put(bytes);
                         } catch (IOException | InterruptedException e) {
                             e.printStackTrace();
@@ -540,7 +543,8 @@ public class M3u8DownloadFactory {
                 if (count > retryCount)
                     //自定义异常
                     throw new M3u8Exception("连接超时！");
-                finishedCount++;
+                //每下载一个ts文件加一
+                    finishedCount++;
 //                Log.i(urls + "下载完毕！\t已完成" + finishedCount + "个，还剩" + (tsSet.size() - finishedCount) + "个！");
             });
         }
@@ -555,11 +559,13 @@ public class M3u8DownloadFactory {
          */
         private String getTsUrl() {
 
+            //获取到索引文件内的内容
             StringBuilder content = getUrlContent(DOWNLOADURL, false);
             //  解析 m3u8 文件，获取 key 和 ts 文件链接
             //判断是否是m3u8链接
             if (!content.toString().contains("#EXTM3U"))
                 throw new M3u8Exception(DOWNLOADURL + "不是m3u8链接！");
+            //// 将字符串内容转换为字符串数组，每行一个元素
             String[] split = content.toString().split("\\n");
             String keyUrl = "";
             boolean isKey = false;
@@ -574,10 +580,16 @@ public class M3u8DownloadFactory {
                 if (s.contains(".m3u8")) {
                     if (StringUtils.isUrl(s))
                         return s;
+
+                    //https://vip1.lz-cdn7.com/20220723/6860_020b87fd/1000k/hls
+                    //获取相对 URL 基础部分，即从 DOWNLOADURL 中截取最后一个斜杠之前的部分
                     String relativeUrl = DOWNLOADURL.substring(0, DOWNLOADURL.lastIndexOf("/") + 1);
                     if (s.startsWith("/"))
+                        // 如果 s 以斜杠开头，则移除第一个斜杠
                         s = s.replaceFirst("/", "");
-                    //获取第二个索引文件的m3u8链接
+
+                    // 使用 mergeUrl 方法将 relativeUrl 和 s 合并为完整的 URL
+                    // 获取第二个索引文件的 m3u8 链接
                     keyUrl = mergeUrl(relativeUrl, s);
                     break;
                 }
@@ -608,7 +620,11 @@ public class M3u8DownloadFactory {
             StringBuilder urlContent;
             if (content == null || StringUtils.isEmpty(content.toString()))
                 //获取所有ts文件链接
+                //当content是null,就是说这个url是空的或者是第一层的m3u8链接，
+                //是没有没有切片文件然后通过 keyUrl = mergeUrl(relativeUrl, s);获取到第二层链接然后就可以再调用一次方法就可以获取到切片文件
                 urlContent = getUrlContent(url, false);
+
+            //这个是直接就是第二层的链接，content不为null
             else urlContent = content;
             //将 urlContent 转换为字符串并检查是否包含 #EXTM3U。
             if (!urlContent.toString().contains("#EXTM3U"))
@@ -634,7 +650,9 @@ public class M3u8DownloadFactory {
                 }
             }
 
-            // 提取基础路径的方法
+            // 提取基础路径的方法,就是切片文件的前部分拼接
+            //https://vip1.lz-cdn7.com/20220723/6860_020b87fd/1000k/hls
+            //获取相对 URL 基础部分，即从 DOWNLOADURL 中截取最后一个斜杠之前的部分
             String relativeUrl = url.substring(0, url.lastIndexOf("/") + 1);
             //将ts片段链接加入set集合
             //遍历字符串数组 split，找到包含 #EXTINF 的行，这标志着 TS 片段链接的开始。
@@ -645,6 +663,8 @@ public class M3u8DownloadFactory {
                 if (s.contains("#EXTINF")) {
                     String s1 = split[++i];
                     //将ts片段链接加入set集合
+                    //它会检查字符串是否是一个 URL。如果 s1 是一个 URL，则直接将其添加到集合中；
+                    // 如果不是 URL，则将其与相对 URL relativeUrl 进行合并，然后再添加到集合中。
                     tsSet.add(StringUtils.isUrl(s1) ? s1 : mergeUrl(relativeUrl, s1));
                 }
             }
@@ -704,20 +724,6 @@ public class M3u8DownloadFactory {
                     InputStream inputStream = httpURLConnection.getInputStream(); // 获取输入流
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream)); // 包装输入流以读取文本
 
-                    if (isKey) { // 如果是获取密钥
-                        byte[] bytes = new byte[128]; // 创建字节数组用于存储密钥数据
-                        int len; // 用于存储读取的字节数
-                        len = inputStream.read(bytes); // 读取字节数据
-                        isByte = true; // 设置标志位
-                        if (len == 16) { // 如果读取到的数据长度为16字节
-                            keyBytes = Arrays.copyOf(bytes, 16); // 存储密钥数据
-                            content.append("isByte"); // 向内容中添加标志
-                        } else {
-                            content.append(new String(Arrays.copyOf(bytes, len))); // 将读取到的数据作为字符串存储
-                        }
-                        return content; // 返回内容
-                    }
-
                     // 读取文本内容
                     while ((line = bufferedReader.readLine()) != null) {
                         content.append(line).append("\n"); // 将每一行内容添加到 StringBuilder 中
@@ -731,6 +737,7 @@ public class M3u8DownloadFactory {
                     Log.d("第" + count + "获取链接重试！\t" + urls); // 打印重试日志
                     count++; // 增加重试计数器
                 } finally {
+                    //可以确保无论在 try 块中发生什么情况（例如出现异常），连接都会被正确关闭
                     if (httpURLConnection != null) {
                         httpURLConnection.disconnect(); // 断开连接
                     }
@@ -804,28 +811,27 @@ public class M3u8DownloadFactory {
             downloadBytes = new BigDecimal(0);
         }
 
+        //这个是获取第二个m3u8链接
         private String mergeUrl(String start, String end) {
+            // 如果结束字符串以斜杠开头，则移除第一个斜杠
             if (end.startsWith("/"))
                 end = end.replaceFirst("/", "");
+
             int position = 0;
             String subEnd, tempEnd = end;
+            // 在结束字符串中查找每个斜杠的位置
             while ((position = end.indexOf("/", position)) != -1) {
+                // 获取当前斜杠之前的子字符串
                 subEnd = end.substring(0, position + 1);
+                // 如果起始字符串以子字符串结尾，则将结束字符串中的这部分子字符串替换为空字符串
                 if (start.endsWith(subEnd)) {
                     tempEnd = end.replaceFirst(subEnd, "");
                     break;
                 }
                 ++position;
             }
+            // 将起始字符串和修改后的结束字符串拼接起来，得到完整的 URL
             return start + tempEnd;
-        }
-
-        public String getDOWNLOADURL() {
-            return DOWNLOADURL;
-        }
-
-        public int getThreadCount() {
-            return threadCount;
         }
 
         public void setThreadCount(int threadCount) {
@@ -840,53 +846,47 @@ public class M3u8DownloadFactory {
             this.threadCount = threadCount;
         }
 
-        public int getRetryCount() {
-            return retryCount;
+        // 辅助方法：将中文标题转换为拼音
+        public static String convertToPinyin(String chinese) {
+            StringBuilder pinyin = new StringBuilder();
+            for (char c : chinese.toCharArray()) {
+                if (Character.toString(c).matches("[\\u4E00-\\u9FA5]+")) {
+                    String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c);
+                    if (pinyinArray != null && pinyinArray.length > 0) {
+                        // 拼接所有拼音结果（去除声调）
+                        pinyin.append(pinyinArray[0].replaceAll("\\d", ""));
+                    }
+                } else {
+                    pinyin.append(c);
+                }
+            }
+            return pinyin.toString();
         }
-
         public void setRetryCount(int retryCount) {
             this.retryCount = retryCount;
         }
 
-        public long getTimeoutMillisecond() {
-            return timeoutMillisecond;
-        }
 
         public void setTimeoutMillisecond(long timeoutMillisecond) {
             this.timeoutMillisecond = timeoutMillisecond;
         }
 
-        public String getDir() {
-            return dir;
-        }
 
         public void setDir(String dir) {
             this.dir = dir;
         }
 
-        public String getFileName() {
-            return fileName;
-        }
 
         public void setFileName(String fileName) {
             this.fileName = fileName;
         }
 
-        public int getFinishedCount() {
-            return finishedCount;
-        }
 
         public void setLogLevel(int level) {
             Log.setLevel(level);
         }
 
-        public Map<String, Object> getRequestHeaderMap() {
-            return requestHeaderMap;
-        }
 
-        public void addRequestHeaderMap(Map<String, Object> requestHeaderMap) {
-            this.requestHeaderMap.putAll(requestHeaderMap);
-        }
 
         public void setInterval(long interval) {
             this.interval = interval;
@@ -902,21 +902,6 @@ public class M3u8DownloadFactory {
             requestHeaderMap.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
         }
 
-        public Proxy getProxy() {
-            return proxy;
-        }
-
-        public void setProxy(int port) {
-            this.proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", port));
-        }
-
-        public void setProxy(String address, int port) {
-            this.proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address, port));
-        }
-
-        public void setProxy(Proxy.Type type, String address, int port) {
-            this.proxy = new Proxy(type, new InetSocketAddress(address, port));
-        }
 
         public void setName(String title) {
             this.title=title;
@@ -929,6 +914,10 @@ public class M3u8DownloadFactory {
         public void setRunnable(Runnable onComplete) {
 
             this.onComplete=onComplete;
+        }
+
+        public void setDetailsId(Integer detailsId) {
+            this.detailsId=detailsId;
         }
     }
 
@@ -944,8 +933,5 @@ public class M3u8DownloadFactory {
         return new M3u8Download(downloadUrl, fileService);
     }
 
-    public static void destroied() {
-        m3u8Download = null;
-    }
 
 }

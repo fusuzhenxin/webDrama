@@ -9,10 +9,8 @@ import lombok.SneakyThrows;
 import net.sourceforge.pinyin4j.PinyinHelper;
 import net.xdclass.video.conf.DownloadProgressManager;
 import net.xdclass.video.download.M3u8DownloadFactory;
-import net.xdclass.video.entity.Details;
-import net.xdclass.video.entity.FileOne;
-import net.xdclass.video.entity.Images;
-import net.xdclass.video.entity.Video;
+import net.xdclass.video.entity.*;
+import net.xdclass.video.listener.DownloadListener;
 import net.xdclass.video.main.M3u8Main;
 import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.FileMapper;
@@ -20,6 +18,8 @@ import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.mapper.VideoMapper;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;
+import net.xdclass.video.utils.Log;
+import net.xdclass.video.utils.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -36,17 +36,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
+import java.math.BigDecimal;
+import java.net.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.System.*;
@@ -88,7 +85,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             + "files" + File.separator
             + "video" + File.separator;
 
+    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(100));
 
+    private Set<DownloadListener> listenerSet = new HashSet<>();
     @Override
     public Integer seleteDiversitys(String name) {
         return videoMapper.seleteDiversitys(name);
@@ -103,13 +102,18 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     @Value("${chromedriverPath}")
     public String chromedriverPath;
 
+    Thread producer;
+    Thread consumer;
 
     private AtomicInteger downloadedEpisodes = new AtomicInteger(0); // 已下载的集数计数器
     private AtomicInteger downloadedEpisodes1 = new AtomicInteger(0); // 已下载的集数计数器
     private WebDriver chromeDriver; // 用于关闭ChromeDriver
 
-    @SneakyThrows
+    private  Long downloadBytes;
+
     public void saves(String name, String taskId) {
+          final BlockingQueue<MyData> blockingQueue=new LinkedBlockingQueue<>(20);
+         producer=new Thread(()->{
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--headless"); // Set Chrome to run in headless mode
         chromeDriver = new ChromeDriver(options);
@@ -165,107 +169,239 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
                         // 等待页面加载完成
                         waitForPageLoad(chromeDriver);
-
                         List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playVideo > video"));
                         for (WebElement element3 : elements3) {
                             //视频url
                             String Url = element3.getAttribute("src");
                             out.println(Url);
-                            download(Url, title, taskId, () -> {
-                                // 重置进度
-                                DownloadProgressManager.setProgress(taskId, 0);
-                                if (downloadedEpisodes.incrementAndGet() >= 5) {
-                                    chromeDriver.close();
-                                }
-                            });
+//                            download(Url, title, taskId, () -> {
+//                                // 重置进度
+//                                DownloadProgressManager.setProgress(taskId, 0);
+//                                if (downloadedEpisodes.incrementAndGet() >= 5) {
+//                                    chromeDriver.close();
+//                                }
+//                            });
+
+                            //把下载url存到一个数组然后通过线程池来下载，同时下载多个视频
+
+                            downloadedEpisodes.incrementAndGet();
+                            MyData myData = new MyData();
+                            myData.setTitle(title);
+                            myData.setUrl(Url);
+                            blockingQueue.put(myData);
+                            out.println(myData);
                         }
                     }
                 }
             }
-        } finally {
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }  finally {
             chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
-        }
-    }
-
-    @SneakyThrows
-    public void download(String url, String title, String taskId, Runnable onComplete) throws IOException {
-
-        // 将标题转换为拼音
-        String pinyin = convertToPinyin(title);
-        // 根据拼音创建文件夹
-        String destDir = FILE_UPLOAD_PATH1 + File.separator + pinyin;
-        File dir = new File(destDir);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + "mp4";
-        String destinationPath = destDir + File.separator + UUID; // 本地文件路径
-        URL videoUrl = new URL(url);
-
-
-        // 获取文件大小
-        HttpURLConnection connection = (HttpURLConnection) videoUrl.openConnection();
-        connection.setRequestMethod("HEAD");
-        long totalSize = connection.getContentLengthLong();
-        connection.disconnect();
-
-        long fileSize = 0;
-        MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-        try (InputStream is = videoUrl.openStream();
-             FileOutputStream fos = new FileOutputStream(destinationPath)) {
-            int len;
-            byte[] buffer = new byte[1024];
-            long downloadedSize = 0;
-            while ((len = is.read(buffer)) != -1) {
-
-                downloadedSize += len; // 更新已下载大小
-                fileSize += len; // 更新文件大小
-                md5Digest.update(buffer, 0, len);
-
-
+            try {
+                blockingQueue.put(null); // 生产者结束后放入标志值通知消费者生产者已结束
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
-        String md5 = bytesToHex(md5Digest.digest());
-        FileOne videoByMd5 = getVideoByMd5(md5);
-        String VideoUrl;
-        if (videoByMd5 != null) {
-            VideoUrl = videoByMd5.getUrl();
-            boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 + pinyin + File.separator + VideoUrl.substring(VideoUrl.lastIndexOf("/") + 1));
-            if (!exist) {
-                downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
-                VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
-            }
-        } else {
-            downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
-            VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
+        });
+
+        consumer=new Thread(()->{
+                    while (true) {
+                        MyData poll = null;
+                        try {
+                            poll = blockingQueue.take();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        if (poll==null){
+                            break;
+                        }
+                        String title = poll.getTitle();
+                        String url = poll.getUrl();
+                        out.println("===============================================================================" + poll);
+                        threadPoolExecutor.submit(()-> {
+                            try {
+                                //将标题转换为拼音
+                                String pinyin = convertToPinyin(title);
+                                // 根据拼音创建文件夹sy
+                                String destDir = FILE_UPLOAD_PATH1 + File.separator + pinyin;
+                                File dir = new File(destDir);
+                                if (!dir.exists()) {
+                                    dir.mkdirs();
+                                }
+
+                                String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + "mp4";
+                                String destinationPath = destDir + File.separator + UUID; // 本地文件路径
+                                URL videoUrl = null;
+                                videoUrl = new URL(url);
+                                // 获取文件大小
+                                HttpURLConnection connection = null;
+                                connection = (HttpURLConnection) videoUrl.openConnection();
+                                connection.setRequestMethod("HEAD");
+                                long totalSize = connection.getContentLengthLong();
+                                connection.disconnect();
+
+                                long fileSize = 0;
+                                MessageDigest md5Digest = null;
+                                try {
+                                    md5Digest = MessageDigest.getInstance("MD5");
+                                } catch (NoSuchAlgorithmException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                try (InputStream is = videoUrl.openStream();
+                                     FileOutputStream fos = new FileOutputStream(destinationPath)) {
+                                    int len;
+                                    byte[] buffer = new byte[1024];
+                                    long downloadedSize = 0;
+                                    while ((len = is.read(buffer)) != -1) {
+
+                                        downloadedSize += len; // 更新已下载大小
+                                        fileSize += len; // 更新文件大小
+                                        md5Digest.update(buffer, 0, len);
+
+
+                                    }
+                                }
+                                String md5 = bytesToHex(md5Digest.digest());
+                                FileOne videoByMd5 = getVideoByMd5(md5);
+                                String VideoUrl;
+                                if (videoByMd5 != null) {
+                                    VideoUrl = videoByMd5.getUrl();
+                                    boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 + pinyin + File.separator + VideoUrl.substring(VideoUrl.lastIndexOf("/") + 1));
+                                    if (!exist) {
+                                        try {
+                                            downloadBytes = downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                        VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
+                                    }
+                                } else {
+                                    downloadBytes = downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
+                                    VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
+                                }
+                                //分集排序
+                                int maxIndex = getMaxIndexForName(title);
+                                int diversity = maxIndex + 1;
+                                Integer detailsId = getDetailsId(title);
+                                out.println(detailsId);
+                                FileOne files = new FileOne();
+                                files.setName(title);
+                                files.setUrl(VideoUrl);
+                                files.setDetailsId(detailsId);
+                                files.setMd5(md5);
+                                files.setSize(fileSize);
+                                files.setType("mp4");
+                                files.setOriginalFilename(url);
+                                files.setDiversity(String.valueOf(diversity));
+                                fileMapper.insert(files);
+                                out.println("下载成功");
+                                DownloadProgressManager.setProgress(taskId, 0);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            });
+                }
+        });
+
+
+        producer.start();
+        consumer.start();
+
+        try {
+            producer.join();
+            consumer.join();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            threadPoolExecutor.shutdown();
         }
 
-        //分集排序
-        int maxIndex = getMaxIndexForName(title);
-        int diversity = maxIndex + 1;
-        Integer detailsId = getDetailsId(title);
-        out.println(detailsId);
-        FileOne files = new FileOne();
-        files.setName(title);
-        files.setUrl(VideoUrl);
-        files.setDetailsId(detailsId);
-        files.setMd5(md5);
-        files.setSize(fileSize);
-        files.setType("mp4");
-        files.setOriginalFilename(url);
-        files.setDiversity(String.valueOf(diversity));
-        fileMapper.insert(files);
-        onComplete.run();
-        out.println("下载成功");
     }
 
-    private void downloadAndSaveFile(URL videoUrl, String destinationPath, MessageDigest md5Digest, long fileSize, long totalSize, String taskId) throws IOException {
+
+//    public void download(String url, String title, String taskId, Runnable onComplete) throws IOException {
+//
+//        // 将标题转换为拼音
+//        String pinyin = convertToPinyin(title);
+//        // 根据拼音创建文件夹
+//        String destDir = FILE_UPLOAD_PATH1 + File.separator + pinyin;
+//        File dir = new File(destDir);
+//        if (!dir.exists()) {
+//            dir.mkdirs();
+//        }
+//
+//        String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + "mp4";
+//        String destinationPath = destDir + File.separator + UUID; // 本地文件路径
+//        URL videoUrl = new URL(url);
+//
+//
+//        // 获取文件大小
+//        HttpURLConnection connection = (HttpURLConnection) videoUrl.openConnection();
+//        connection.setRequestMethod("HEAD");
+//        long totalSize = connection.getContentLengthLong();
+//        connection.disconnect();
+//
+//        long fileSize = 0;
+//        MessageDigest md5Digest = MessageDigest.getInstance("MD5");
+//        try (InputStream is = videoUrl.openStream();
+//             FileOutputStream fos = new FileOutputStream(destinationPath)) {
+//            int len;
+//            byte[] buffer = new byte[1024];
+//            long downloadedSize = 0;
+//            while ((len = is.read(buffer)) != -1) {
+//
+//                downloadedSize += len; // 更新已下载大小
+//                fileSize += len; // 更新文件大小
+//                md5Digest.update(buffer, 0, len);
+//
+//
+//            }
+//        }
+//        String md5 = bytesToHex(md5Digest.digest());
+//        FileOne videoByMd5 = getVideoByMd5(md5);
+//        String VideoUrl;
+//        if (videoByMd5 != null) {
+//            VideoUrl = videoByMd5.getUrl();
+//            boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 + pinyin + File.separator + VideoUrl.substring(VideoUrl.lastIndexOf("/") + 1));
+//            if (!exist) {
+//                downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
+//                VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
+//            }
+//        } else {
+//            downloadAndSaveFile(videoUrl, destinationPath, md5Digest, fileSize, totalSize, taskId);
+//            VideoUrl = "http://localhost:9090/files/video/" + pinyin + "/" + UUID;
+//        }
+//
+//        //分集排序
+//        int maxIndex = getMaxIndexForName(title);
+//        int diversity = maxIndex + 1;
+//        Integer detailsId = getDetailsId(title);
+//        out.println(detailsId);
+//        FileOne files = new FileOne();
+//        files.setName(title);
+//        files.setUrl(VideoUrl);
+//        files.setDetailsId(detailsId);
+//        files.setMd5(md5);
+//        files.setSize(fileSize);
+//        files.setType("mp4");
+//        files.setOriginalFilename(url);
+//        files.setDiversity(String.valueOf(diversity));
+//        fileMapper.insert(files);
+//        onComplete.run();
+//        out.println("下载成功");
+//    }
+
+    private Long downloadAndSaveFile(URL videoUrl, String destinationPath, MessageDigest md5Digest, long fileSize, long totalSize, String taskId) throws IOException {
+        long downloadedSize = 0;
         try (InputStream down = videoUrl.openStream();
              FileOutputStream fos = new FileOutputStream(destinationPath)) {
             int len;
             byte[] buffer = new byte[1024];
-            long downloadedSize = 0;
+
             while ((len = down.read(buffer)) != -1) {
                 fos.write(buffer, 0, len);
                 downloadedSize += len; // 更新已下载大小
@@ -281,10 +417,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 }
             }
         }
+        return downloadedSize;
     }
 
 
-    private Integer getDetailsId(String name) {
+    private Integer getDetailsId(String name)
+    {
         QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("name", name);
         try {
@@ -410,8 +548,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                 }
                             }
 
+                            Integer detailsId = getDetailsId(title);
                             // Synchronously download the video with callback
-                            boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl);
+                            boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl,detailsId);
 
                             if (downloadSuccess) {
                                 // Increment the episode count after successful download
@@ -441,12 +580,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         }
     }
 
-    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl) {
+    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl,Integer detailsId) {
         final boolean[] success = {false};
         CountDownLatch latch = new CountDownLatch(1);
 
         try {
-            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, fileService, () -> {
+            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,detailsId, fileService, () -> {
                 success[0] = true;
                 latch.countDown(); // Notify the main thread after download completion
             });
@@ -460,124 +599,13 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         return success[0];
     }
 
+    private void downloadM3u8Video(){
 
-
-
-
+    }
     private void waitForPageLoad(WebDriver driver) {
-        new WebDriverWait(driver, Duration.ofSeconds(30)).until(webDriver ->
+        new WebDriverWait(driver, Duration.ofSeconds(20)).until(webDriver ->
                 ((JavascriptExecutor) webDriver).executeScript("return document.readyState").equals("complete"));
     }
-
-    private void downloadNextVideo(WebDriver driver, Elements elements, Element currentElement,String title) {
-        driver.close();
-
-        boolean next = false;
-        for (Element element2 : elements) {
-            if (next) {
-                //每一集视频链接
-                String text = element2.select(".autowidth").text();
-                String href1 = element2.select(".autowidth").attr("href");
-                String videoUrl = "https://v.ijujitv.cc/" + href1;
-
-                setProperty("webdriver.chrome.driver", chromedriverPath);
-                ChromeDriver chromeDriver = new ChromeDriver();
-                chromeDriver.get(videoUrl);
-
-                // 等待页面加载完成
-                waitForPageLoad(chromeDriver);
-
-                List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
-                for (WebElement element3 : elements3) {
-                    String VideoUrl = element3.getAttribute("src");
-                    int startIndex = VideoUrl.indexOf("url=");
-                    if (startIndex != -1) {
-                        String extractedUrl = VideoUrl.substring(startIndex + "url=".length());
-                        int endIndex = extractedUrl.indexOf(".m3u8");
-                        if (endIndex != -1) {
-                            extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
-                            String modifiedUrl = removeLastSegment(extractedUrl);
-                            String thirdLine = getThirdLine(extractedUrl);
-                            String newVideoUrl;
-                            if (thirdLine == null) {
-                                newVideoUrl = extractedUrl;
-                            } else {
-                                newVideoUrl = modifiedUrl + thirdLine;
-                            }
-
-                            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,fileService,() -> downloadNextVideo(chromeDriver, elements, element2,title));
-                            return;
-                        }
-                    }
-                }
-            }
-            if (element2.equals(currentElement))
-                next = true;
-        }
-    }
-
-//@Value("${chromedriverPath}")
-//public String chromedriverPath;
-//    public void saveList() {
-//        for (int page = 2; page <= 3; page++) {
-//            String homeUrl = "https://www.naifei.art/vodtype/ribenju-" + page + ".html";
-//            Document document = Jsoup.connect(homeUrl).get();
-//            Elements elements = document.getElementsByClass("module-item");
-//
-//            for (Element element : elements) {
-//                String href = element.select("a").attr("href");
-//                Document document1 = Jsoup.connect(href).get();
-//                Elements elements1 = document1.select(".content");
-//
-//                for (Element element1 : elements1) {
-//                    String title = element1.select("h1.page-title").text();
-//                    String img = element1.select(".module-item-pic img").attr("src");
-//                    imgUrl(img, title);
-//                    System.out.println(title + ":" + img);
-//
-//                    Elements elements2 = element1.select("#sort-item-7 a");
-//
-//                    System.setProperty("webdriver.chrome.driver", chromedriverPath);
-//                    ChromeDriver chromeDriver = new ChromeDriver();
-//
-//                    for (Element element2 : elements2) {
-//                        String text = element2.attr("title");
-//                        String href1 = element2.attr("href");
-//                        String videoUrl = "https://www.naifei.art" + href1;
-//
-//                        chromeDriver.get(videoUrl);
-//
-//                        // 等待页面加载完成
-//                        waitForPageLoad(chromeDriver);
-//
-//                        List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
-//                        for (WebElement element3 : elements3) {
-//                            String VideoUrl = element3.getAttribute("src");
-//                            int startIndex = VideoUrl.indexOf("url=");
-//                            if (startIndex != -1) {
-//                                String extractedUrl = VideoUrl.substring(startIndex + "url=".length());
-//                                int endIndex = extractedUrl.indexOf(".m3u8");
-//                                if (endIndex != -1) {
-//                                    extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
-//                                    String modifiedUrl = removeLastSegment(extractedUrl);
-//                                    String thirdLine = getThirdLine(extractedUrl);
-//                                    String newVideoUrl;
-//                                    if (thirdLine == null) {
-//                                        newVideoUrl = extractedUrl;
-//                                    } else {
-//                                        newVideoUrl = modifiedUrl + thirdLine;
-//                                    }
-//
-//                                    M3u8Main.downloadM3u8Video(newVideoUrl, text, () -> downloadNextVideo(chromeDriver, elements2, element2));
-//                                    return;
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
 
     //图片下载
