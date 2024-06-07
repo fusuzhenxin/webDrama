@@ -81,7 +81,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             + "files" + File.separator
             + "video" + File.separator;
 
-    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(100));
+    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(2, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(100));
 
     private Set<DownloadListener> listenerSet = new HashSet<>();
 
@@ -553,7 +553,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                             Integer detailsId = getDetailsId(title);
                                             // Synchronously download the video with callback
 //                                boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl,detailsId);
-
+                                            downloadedEpisodes1.incrementAndGet();
                                             webDrama webDrama=new webDrama();
                                             webDrama.setNewVideoUrl(newVideoUrl);
                                             webDrama.setTitle(title);
@@ -601,12 +601,12 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                         String extractedUrl = poll.getExtractedUrl();
                         Integer detailsId = poll.getDetailsId();
                         String title = poll.getTitle();
+                        threadPoolExecutor.submit(()->{
+                            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, detailsId, fileService);
+                        });
 
-
-                    M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, detailsId, fileService);
-
-                downloadedEpisodes1.incrementAndGet();
             }
+            threadPoolExecutor.shutdown();
 
         });
         producer.start();

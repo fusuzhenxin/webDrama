@@ -137,7 +137,7 @@ public class M3u8Main {
             + "files" + File.separator
             + "video" + File.separator;
     public static void downloadM3u8Video(String M3U8URL, String title  , String extractedUrl , Integer detailsId, FileService fileService) {
-        String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT;
+        String UUID = IdUtil.fastSimpleUUID();
 
         M3u8DownloadFactory.M3u8Download m3u8Download = M3u8DownloadFactory.getInstance(M3U8URL, fileService);
 
@@ -148,12 +148,11 @@ public class M3u8Main {
         //视频源文件
         m3u8Download.setOriginal(extractedUrl);
         //视频名称
-
         m3u8Download.setName(title);
         //外键id
         m3u8Download.setDetailsId(detailsId);
         //设置线程
-        m3u8Download.setThreadCount(10);
+        m3u8Download.setThreadCount(50);
         //设置重试次数
         m3u8Download.setRetryCount(5);
         //设置连接超时时间（单位：毫秒）
