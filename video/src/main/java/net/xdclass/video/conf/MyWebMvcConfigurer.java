@@ -14,6 +14,7 @@ public class MyWebMvcConfigurer implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/files/image/**").addResourceLocations("file:F:\\webDrama\\video\\src\\main\\resources\\files\\image\\");
         registry.addResourceHandler("/files/video/**").addResourceLocations("file:F:\\webDrama\\video\\src\\main\\resources\\files\\video\\");
+        registry.addResourceHandler("/files/images/**").addResourceLocations("file:F:\\webDrama\\video\\src\\main\\resources\\files\\images\\");
     }
 }
 

@@ -7,6 +7,7 @@
     background-color="#545c64"
     text-color="#fff"
     active-text-color="#ffd04b"
+    style="height: 70px;margin-top: -10px;border-radius: 5px;"
     @select="handleSelect"
   >
     <el-menu-item index="/HelloWorld">  
@@ -36,6 +37,14 @@
           <span>管理员管理</span>
         </template>
         <el-menu-item index="/adminList">管理员列表</el-menu-item>
+      </el-sub-menu>
+
+      <el-sub-menu index="news">
+        <template #title>
+          <i class="el-icon-user"></i>
+          <span>娱乐新闻管理</span>
+        </template>
+        <el-menu-item index="/newsList">娱乐新闻列表</el-menu-item>
       </el-sub-menu>
 
       <el-sub-menu index="crawler">

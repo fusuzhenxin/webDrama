@@ -191,6 +191,18 @@ public class DetailsController {
         return Result.success(page);
     }
 
+    @GetMapping("/page")
+    public Result findPage(@RequestParam(defaultValue = "") String name,
+                           @RequestParam Integer pageNum,
+                           @RequestParam Integer pageSize){
+        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("details_id");
+        if (!"".equals(name)) {
+            queryWrapper.like("name", name);
+        }
+        Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        return Result.success(page);
+    }
     @DeleteMapping("/{id}")
     public Result deleteById(@PathVariable Integer id){
         detailsService.removeById(id);

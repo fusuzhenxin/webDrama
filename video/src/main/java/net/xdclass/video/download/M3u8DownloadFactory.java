@@ -150,7 +150,7 @@ public class M3u8DownloadFactory {
                 mergeTs();
                 deleteFiles();
                // Ensure the callback is called after merging and cleanup
-//                onComplete.run();
+                onComplete.run();
             }).start();
         }
 

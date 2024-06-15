@@ -20,6 +20,8 @@ public class AdminController {
     @Autowired
     private AdminMapper adminMapper;
 
+
+
     @PostMapping("/save")
     public Result save(@RequestBody Admin admin){
         admin.setPassword("123");

@@ -1,6 +1,5 @@
 <template>
-    <div class="outer-container" style="background-color: white;">
-  <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+
 
     <el-container>
       <el-header style="padding: 0px">
@@ -44,7 +43,8 @@
 
         </el-main>
 <el-footer>
-
+  <div class="outer-container" style="background-color: white;">
+    <div class="container" style="min-height: 100%; padding-bottom: 100px;">
     <!-- 显示搜索结果的内容 -->
     <div v-if="shortDramas.length > 0">
       <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.id, drama.name)">
@@ -91,7 +91,7 @@
             </div>
           </el-col>
           <el-col :span="17">
-            <div class="grid-content bg-purple-light" style="text-align: left">
+            <div class="grid-content bg-purple-light" style="text-align: lef;margin-left: 100px;">
               <h1 style="margin-bottom: 40px">{{ drama.name }}</h1>
               <el-button  type="danger" plain style="margin-bottom: 40px;" v-for="(category, index) in drama.classify.split(' ')" :key="index" >
                 {{ category }}
@@ -114,14 +114,14 @@
       layout="total, sizes, prev, pager, next, jumper"
       :total="total"
   ></el-pagination>
+    
+  
+</div>
+  </div>
 </el-footer>
 
       </el-container>
     </el-container>
-
-
-  </div>
-  </div>
 </template>
 <script setup>
 import { ref ,onMounted  } from 'vue';
@@ -190,7 +190,7 @@ onMounted(() => {
 });
 const goToDramaDetail = (dramaId,name) => {
   // Navigate to the detail page and pass drama ID as route parameter
-  router.push({ name: 'videoDetail', params: { id: dramaId ,name: name} });
+  router.push({ name: 'VideoStory', params: { id: dramaId ,name: name} });
 };
 
 const handleSizeChange =(val)=>{
@@ -203,6 +203,16 @@ const handleCurrentChange =(val)=>{
 }
 </script>
 <style scoped>
+.outer-container {
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 .nav-list {
   position: fixed;
   top: -0px;
@@ -214,13 +224,22 @@ const handleCurrentChange =(val)=>{
   z-index: 1000;
 }
 .search-page {
-  margin: -20px;
+  /* margin: -20px;
   padding: 129px;
+  background-color: whitesmoke; */
+  justify-content: center;
+  align-items: center;
+  margin: -20px;
+  padding: 100px 20px;
   background-color: whitesmoke;
-
+  
+  
 }
 .search-containers {
   display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
 .search-containers input {
   padding: 5px;
@@ -228,7 +247,6 @@ const handleCurrentChange =(val)=>{
   margin-top: -26px;
   height: 40px;
   width: 400px;
-  margin-left: 321px;
   border: 1px solid #ccc;
   font-family: '宋体', Arial, sans-serif;
 }
@@ -240,7 +258,7 @@ const handleCurrentChange =(val)=>{
   background-color: white;
   color: #e1442e;
   cursor: pointer;
-  height: 51px;
+  height: 52px;
   border: 1px solid #ccc; /* 添加边框样式 */
   font-family: '宋体', Arial, sans-serif; /* 设置搜索框文字为宋体 */
 
@@ -265,10 +283,11 @@ const handleCurrentChange =(val)=>{
   border-radius: 10px;
   width: 184px;
   height: 264px;
-  margin-left: 120px;
+  margin-left: 150px;
 
 }
 .drama-card{
+  justify-content: center;
   margin-bottom: 50px;
 }
 </style>

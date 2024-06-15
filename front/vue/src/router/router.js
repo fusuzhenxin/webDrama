@@ -3,9 +3,26 @@ import HelloWorld from '@/components/HelloWorld.vue'
 import Layout from "@/views/Layout.vue";
 const routes = [
     {
-        path: '/VideoDetail',
+        path: '/videoDetails',
         name: 'videoDetail',
-        component: ()=> import("../views/VideoDetail.vue")
+        component: ()=> import("../views/VideoDetail.vue"),
+    },
+    //娱乐新闻列表
+    {
+        path: '/Entertainment',
+        name: 'Entertainment',
+        component: ()=> import("../views/Entertainment.vue"),
+    },
+    //新闻详情
+    {
+        path: '/NewsDetails',
+        name: 'NewsDetails',
+        component: ()=> import("../views/NewsDetails.vue"),
+    },
+    {
+        path: '/VideoStory',
+        name: 'VideoStory',
+        component: ()=> import("../views/VideoStory.vue")
 
     },
     {

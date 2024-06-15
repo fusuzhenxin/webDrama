@@ -10,7 +10,7 @@
         <el-main style="background-color: whitesmoke">
           <div class="drama-sections">
             <br>
-            <el-text style="font-size: 20px;margin-left: 20px;margin-top: 10px">逆袭</el-text>
+            <el-text style="font-size: 20px;margin-left: 20px;margin-top: 10px">时空之旅</el-text>
             <div class="drama-section">
               <br>
               <div class="drama-list">
@@ -41,7 +41,8 @@
   import { useRouter } from 'vue-router';
   import '@fortawesome/fontawesome-free/css/all.css'; // 在 JavaScript 文件中引入
   
-  
+  const sort=ref('时空之旅')
+  const indicate=ref('/traversing')
   // Reactive data for short dramas
   const shortDramas = ref([]);
   // Method to fetch short drama data asynchronously
@@ -67,7 +68,7 @@
     console.log("---",name);
     console.log("idid ",dramaId);
     // Navigate to the detail page and pass drama ID as route parameter
-    router.push({ name: 'videoDetail', params: { id: dramaId ,name: name} });
+    router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
   };
   
   </script>

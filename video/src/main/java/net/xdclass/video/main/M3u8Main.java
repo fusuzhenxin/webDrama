@@ -113,6 +113,7 @@ package net.xdclass.video.main;//package net.xdclass.video.main;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import net.xdclass.video.conf.DownloadProgressManager;
 import net.xdclass.video.download.M3u8DownloadFactory;
 import net.xdclass.video.listener.DownloadListener;
 import net.xdclass.video.service.FileService;
@@ -136,7 +137,7 @@ public class M3u8Main {
             + File.separator
             + "files" + File.separator
             + "video" + File.separator;
-    public static void downloadM3u8Video(String M3U8URL, String title  , String extractedUrl , Integer detailsId, FileService fileService) {
+    public static void downloadM3u8Video(String M3U8URL, String title  , String extractedUrl , Integer detailsId,String taskId,Integer threadCount, FileService fileService,Runnable onComplete) {
         String UUID = IdUtil.fastSimpleUUID();
 
         M3u8DownloadFactory.M3u8Download m3u8Download = M3u8DownloadFactory.getInstance(M3U8URL, fileService);
@@ -152,7 +153,7 @@ public class M3u8Main {
         //外键id
         m3u8Download.setDetailsId(detailsId);
         //设置线程
-        m3u8Download.setThreadCount(50);
+        m3u8Download.setThreadCount(threadCount);
         //设置重试次数
         m3u8Download.setRetryCount(5);
         //设置连接超时时间（单位：毫秒）
@@ -164,7 +165,7 @@ public class M3u8Main {
         m3u8Download.setLogLevel(Constant.INFO);
         //设置监听器间隔（单位：毫秒）
         m3u8Download.setInterval(500L);
-//        m3u8Download.setRunnable(onComplete);
+        m3u8Download.setRunnable(onComplete);
         //添加监听器
         m3u8Download.addListener(new DownloadListener() {
             @Override
@@ -174,6 +175,7 @@ public class M3u8Main {
 
             @Override
             public void process(String downloadUrl, int finished, int sum, float percent) {
+                DownloadProgressManager.setProgress(taskId, percent);
                 System.out.println("下载网址：" + downloadUrl + "\t已下载" + finished + "个\t一共" + sum + "个\t已完成" + percent + "%");
             }
 
@@ -186,7 +188,7 @@ public class M3u8Main {
             public void end() {
                 System.out.println("下载完毕");
                 m3u8Download.mergeAndCleanUpFiles(()->{
-//                    onComplete.run();
+                    onComplete.run();
                 });
             }
         });

@@ -41,7 +41,8 @@
   import { useRouter } from 'vue-router';
   import '@fortawesome/fontawesome-free/css/all.css'; // 在 JavaScript 文件中引入
   
-  
+  const sort=ref('逆袭')
+  const indicate=ref('/counterattack')
   // Reactive data for short dramas
   const shortDramas = ref([]);
   // Method to fetch short drama data asynchronously
@@ -67,7 +68,8 @@
     console.log("---",name);
     console.log("idid ",dramaId);
     // Navigate to the detail page and pass drama ID as route parameter
-    router.push({ name: 'videoDetail', params: { id: dramaId ,name: name} });
+    // router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
+    router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
   };
   
   </script>

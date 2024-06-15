@@ -11,10 +11,7 @@ import net.xdclass.video.conf.DownloadProgressManager;
 import net.xdclass.video.entity.*;
 import net.xdclass.video.listener.DownloadListener;
 import net.xdclass.video.main.M3u8Main;
-import net.xdclass.video.mapper.DetailsMapper;
-import net.xdclass.video.mapper.FileMapper;
-import net.xdclass.video.mapper.ImagesMapper;
-import net.xdclass.video.mapper.VideoMapper;
+import net.xdclass.video.mapper.*;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;
 import org.jsoup.Jsoup;
@@ -60,6 +57,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     @Autowired
     private FileMapper fileMapper;
 
+    @Autowired
+    private AcquireMapper acquireMapper;
+
     // 在类中声明 previousProgress 变量
     private long previousProgress = -1;
     //静态文件路径
@@ -80,6 +80,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             + File.separator
             + "files" + File.separator
             + "video" + File.separator;
+    private static final String FILE_UPLOAD_PATH_IMG = getProperty("user.dir")
+            + File.separator
+            + "src" + File.separator
+            + "main" + File.separator
+            + "resources"
+            + File.separator
+            + "files" + File.separator
+            + "images" + File.separator;
 
     private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(2, 10, 30, TimeUnit.MINUTES, new ArrayBlockingQueue<>(100));
 
@@ -133,7 +141,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
                 Elements elements1 = document1.select("#__next > main");
                 for (Element element1 : elements1) {
-                    String role;
+                  String role;
                     //剧名
                     String title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
                     //分类
@@ -145,6 +153,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                     String url = "https://www.kuaikaw.cn" + imgUrl;
                     //详情
                     String details = element1.select(".DramaDetail_intro__O7jEz").text();
+                    String diversity=element1.select("a.pcDrama_catalogItem__4Q_C0").text();
 
                     if (actors == null) {
                         role = "";
@@ -159,7 +168,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                         if (downloadedEpisodes.get() >= 5) { // 限制下载5集
                             out.println("已下载5集，结束下载。");
                             downloadedEpisodes.set(0);
-                            break; // 继续下一个剧
+                            QueryWrapper<Acquire> acquireQueryWrapper=new QueryWrapper<>();
+                            acquireQueryWrapper.eq("name", name);
+                            Acquire acquire = acquireMapper.selectOne(acquireQueryWrapper);
+                            if (acquire==null) {
+                                break; // 继续下一个剧
+                            } else{
+                                return;
+                            }
                         }
                         //每一集页面url
                         String href1 = element2.select("a.pcDrama_catalogItem__4Q_C0").attr("href");
@@ -308,7 +324,6 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
             threadPoolExecutor.shutdown();
         });
 
-
         producer.start();
         consumer.start();
 
@@ -322,6 +337,107 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
     }
 
+    @Override
+    public List<Details> seleteAcquireList(String name) {
+        List<Details> detailsList=new ArrayList<>();
+
+        String title = null;
+        String classify=null;
+        String imgUrl=null;
+        String actors=null;
+        Integer id=1;
+        try {
+
+            String urls = "https://www.kuaikaw.cn/search/?searchValue=" + name;
+            out.println("正在爬取：" + urls);
+            //最外面的url
+            Document document = Jsoup.connect(urls).get();
+            Elements element = document.select(".TagBookList_tagItem__xL2IA");
+            for (Element elements : element) {
+                //第二页详情页url
+                String href = elements.select("a.TagBookList_totalChapterNum__CHaGs").attr("href");
+                String url1 = "https://www.kuaikaw.cn" + href;
+                Document document1 = Jsoup.connect(url1).get();
+
+                Elements elements1 = document1.select("#__next > main");
+
+                for (Element element1 : elements1) {
+
+                        Details Details = new Details();
+                        String role;
+                        //剧名
+                        title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
+                        //分类
+                        classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
+                        //图片url
+                        imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
+                        //主演
+                        actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
+                        String url = "https://www.kuaikaw.cn" + imgUrl;
+                        //详情
+                        String details = element1.select(".DramaDetail_intro__O7jEz").text();
+                        imgUrlList(url,title,classify,actors,details);
+                        detailsList.add(Details);
+                        id++;
+                    }
+
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return detailsList;
+    }
+    //获取所有短剧详情存数据库方便搜索
+    public List<Acquire> seleteAcquireLists() {
+        List<Acquire> acquireList=new ArrayList<>();
+
+        String title = null;
+        String classify=null;
+        String imgUrl=null;
+        String actors=null;
+        Integer id=1;
+        try {
+            for (int i = 168; i < 187; i++) {
+
+                String urls = "https://www.kuaikaw.cn/browse/0/" + i;
+                out.println("正在爬取：" + urls);
+                //最外面的url
+                Document document = Jsoup.connect(urls).get();
+                Elements element = document.select(".BrowseList_itemBox__S5QRX");
+                for (Element elements : element) {
+                    //第二页详情页url
+                    String href = elements.select("a.image_imageScaleBox__JFwzM.BrowseList_imageBox__fPYH7").attr("href");
+                    String url1 = "https://www.kuaikaw.cn" + href;
+                    Document document1 = Jsoup.connect(url1).get();
+
+                    Elements elements1 = document1.select("#__next > main");
+
+                    for (Element element1 : elements1) {
+
+                        Acquire acquire = new Acquire();
+                        String role;
+                        //剧名
+                        title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
+                        //分类
+                        classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
+                        //图片url
+                        imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
+                        //主演
+                        actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
+                        String url = "https://www.kuaikaw.cn" + imgUrl;
+                        //详情
+                        String details = element1.select(".adm-ellipsis.DramaDetail_intro__O7jEz").text();
+                        imgUrlList(url,title,classify,actors,details);
+                        acquireList.add(acquire);
+                    }
+
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return acquireList;
+    }
 
 //    public void download(String url, String title, String taskId, Runnable onComplete) throws IOException {
 //
@@ -459,11 +575,14 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
         }
     }
 
+    //多个视频下载有生产者与消费者
     @SneakyThrows
-    public void saveList(String name, String classify) {
+    public void saveList(String name, String classify,String taskId) {
         final ArrayBlockingQueue<webDrama> queue=new ArrayBlockingQueue<>(5);
         producer=new Thread(()-> {
                         try {
+                            ChromeOptions options=new ChromeOptions();
+                            options.addArguments("--headless");
                             String urls = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
                             out.println("正在爬取：" + urls);
                             // 最外面的url
@@ -502,7 +621,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                     Elements elements2 = element1.select("#playlist3 > div > ul > li");
 
                                     for (Element element2 : elements2) {
-                                        if (downloadedEpisodes1.get() >= 2) { // 限制下载3集
+                                        if (downloadedEpisodes1.get() >= 1) { // 限制下载3集
                                             out.println("已下载3集，结束下载。");
                                             downloadedEpisodes1.set(0); // 重置计数器
                                             break; // 继续下一个剧
@@ -517,7 +636,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                         }
 
                                         setProperty("webdriver.chrome.driver", chromedriverPath);
-                                        ChromeDriver chromeDriver = new ChromeDriver();
+                                        ChromeDriver chromeDriver = new ChromeDriver(options);
                                         // Navigate to the video URL
                                         chromeDriver.get(videoUrl);
 
@@ -577,8 +696,9 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                                 chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
                             }
                             try {
+
                                 queue.put(null);
-                            } catch (InterruptedException e) {
+                            } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
 
@@ -597,12 +717,16 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 if (poll==null){
                     break;
                 }
+                //线程数
+                        Integer threadCount=10;
                         String newVideoUrl = poll.getNewVideoUrl();
                         String extractedUrl = poll.getExtractedUrl();
                         Integer detailsId = poll.getDetailsId();
                         String title = poll.getTitle();
                         threadPoolExecutor.submit(()->{
-                            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, detailsId, fileService);
+                            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl, detailsId,taskId,threadCount, fileService,()->{
+                                out.println("下载成功");
+                            });
                         });
 
             }
@@ -621,25 +745,200 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
 
 
     }
+    //单个视频下载还没有生产者与消费者
+    public void saveListOneway(String name, String classify,String taskId) {
+            try {
+                ChromeOptions options=new ChromeOptions();
+                options.addArguments("--headless");
+                String urls = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
+                out.println("正在爬取：" + urls);
+                // 最外面的url
+                Document document = Jsoup.connect(urls).get();
+                Elements element = document.select(".m-item");
+                for (Element elements : element) {
+                    // 第二页详情页url
+                    String href = elements.select("a.thumb").attr("href");
+                    String url1 = "https://v.ijujitv.cc/" + href;
+                    Document document1 = Jsoup.connect(url1).get();
 
-//    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl,Integer detailsId) {
-//        final boolean[] success = {false};
-//        CountDownLatch latch = new CountDownLatch(1);
-//
-//        try {
-//            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,detailsId, fileService, () -> {
-//                success[0] = true;
-//                latch.countDown(); // Notify the main thread after download completion
-//            });
-//
-//            // Wait for the download to complete
-//            latch.await();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        return success[0];
-//    }
+                    Elements elements1 = document1.select(".main-inner");
+                    for (Element element1 : elements1) {
+                        String role;
+                        // 剧名
+                        String title = element1.select("h1.title").text();
+
+                        // 图片url
+                        String imgUrl = element1.select("img").attr("data-original");
+                        // 主演
+                        String actors = element1.select("p:nth-child(5) > a").text();
+                        String url = "https://v.ijujitv.cc/" + imgUrl;
+                        // 详情
+                        String intro = element1.select("div.albumDetailMain-right > p").text();
+                        // 去除简介部分
+                        String details = intro.replaceFirst("^简介：\\s*", "");
+
+                        if (actors == null) {
+                            role = "";
+                        } else {
+                            role = actors;
+                        }
+                        out.println(url + ":" + title + ":" + details + ":" + classify);
+                        imgUrl(url, title, classify, role, details);
+                        // 分集类名
+                        Elements elements2 = element1.select("#playlist3 > div > ul > li");
+
+                        //遍历每部剧的每集
+                        for (Element element2 : elements2) {
+                            if (downloadedEpisodes.get() >= 2) { // 限制下载3集
+                                out.println("已下载3集，结束下载。");
+                                downloadedEpisodes.set(0); // 重置计数器
+                                break; // 继续下一个剧
+                            }
+                            // 每一集页面url
+                            String href1 = element2.select(".autowidth").attr("href");
+                            String videoUrl = "https://v.ijujitv.cc/" + href1;
+
+                            // 判断是否是需要跳过的链接
+                            if ("https://v.ijujitv.cc//m.nwtef.xyz/dl/index.html?sc=1001_dc_xk&srcPlay=play".equals(videoUrl)) {
+                                continue; // 跳过当前循环
+                            }
+
+                            setProperty("webdriver.chrome.driver", chromedriverPath);
+                            ChromeDriver chromeDriver = new ChromeDriver(options);
+                            // Navigate to the video URL
+                            chromeDriver.get(videoUrl);
+
+                            // 等待页面加载完成
+                            waitForPageLoad(chromeDriver);
+
+                            List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playleft > iframe"));
+                            //是null就直接跳出
+                            for (WebElement element3 : elements3) {
+                                String extractedUrl = null;
+                                String newVideoUrl = null;
+                                String VideoUrl = element3.getAttribute("src");
+                                int startIndex = VideoUrl.indexOf("url=");
+                                if (startIndex != -1) {
+                                    extractedUrl = VideoUrl.substring(startIndex + "url=".length());
+                                    int endIndex = extractedUrl.indexOf(".m3u8");
+                                    if (endIndex != -1) {
+                                        // 原视频连接
+                                        extractedUrl = extractedUrl.substring(0, endIndex + ".m3u8".length());
+                                        // 去掉index.m3u8这个后缀的视频链接
+                                        String modifiedUrl = removeLastSegment(extractedUrl);
+                                        // 检测第一个index.m3u8是只有三行的话返回thirdLine，不然返回null
+                                        String thirdLine = getThirdLine(extractedUrl);
+
+                                        if (thirdLine == null) {
+                                            newVideoUrl = extractedUrl;
+                                        } else {
+                                            newVideoUrl = modifiedUrl + thirdLine;
+                                        }
+                                    }
+                                }
+
+                                out.println("====="+newVideoUrl);
+                                //外键
+                                Integer detailsId = getDetailsId(title);
+                                //线程数
+                                Integer threadCount=50;
+                                // Synchronously download the video with callback
+                                boolean downloadSuccess = downloadVideoSynchronously(newVideoUrl, title, extractedUrl,detailsId,taskId,threadCount);
+                                out.println(downloadSuccess);
+                                if (downloadSuccess){
+                                    downloadedEpisodes.incrementAndGet();
+                                    break;
+                                }
+
+                            }
+
+                        // 检查是否已经下载了3集，跳出循环
+                        if (downloadedEpisodes.get() >= 2) {
+                            break;
+                        }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (chromeDriver != null) {
+                    chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
+                }
+
+            }
+
+    }
+
+
+    //搜索视频详情
+    public List<Acquire> saveListAcquire(String name, String classify) {
+        List<Acquire> acquireList=new ArrayList<>();
+        try {
+            String urls = "https://v.ijujitv.cc/search/-------------.html?wd=" + name;
+            out.println("正在爬取：" + urls);
+            // 最外面的url
+            Document document = Jsoup.connect(urls).get();
+            Elements element = document.select(".m-item");
+            for (Element elements : element) {
+                // 第二页详情页url
+                String href = elements.select("a.thumb").attr("href");
+                String url1 = "https://v.ijujitv.cc/" + href;
+                Document document1 = Jsoup.connect(url1).get();
+
+                Elements elements1 = document1.select(".main-inner");
+                for (Element element1 : elements1) {
+                    Acquire acquire=new Acquire();
+                    String role;
+                    // 剧名
+                    String title = element1.select("h1.title").text();
+
+                    // 图片url
+                    String imgUrl = element1.select("img").attr("data-original");
+                    // 主演
+                    String actors = element1.select("p:nth-child(5) > a").text();
+                    String url = "https://v.ijujitv.cc/" + imgUrl;
+                    // 详情
+                    String intro = element1.select("div.albumDetailMain-right > p").text();
+                    // 去除简介部分
+                    String details = intro.replaceFirst("^简介：\\s*", "");
+                    if (actors == null) {
+                        role = "";
+                    } else {
+                        role = actors;
+                    }
+
+                    acquire.setDescription(details);
+                    acquire.setName(title);
+                    acquire.setClassify(classify);
+                    acquire.setActors(actors);
+                    acquire.setCover(url);
+                    acquireList.add(acquire);
+                }
+            }
+                }catch (Exception e){
+            e.printStackTrace();
+        }
+        return acquireList;
+    }
+
+    private boolean downloadVideoSynchronously(String newVideoUrl, String title, String extractedUrl,Integer detailsId,String taskId,Integer threadCount) {
+        final boolean[] success = {false};
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            M3u8Main.downloadM3u8Video(newVideoUrl, title, extractedUrl,detailsId,taskId,threadCount,fileService,()->{
+                success[0] = true;
+                latch.countDown(); // Notify the main thread after download completion
+            });
+            // Wait for the download to complete
+            latch.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return success[0];
+    }
 
     private void downloadM3u8Video(){
 
@@ -779,6 +1078,43 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
                 out.println("Image downloaded successfully: " + destinationPaths);
             } catch (Exception e) {
                 err.println("Error downloading image: " + e.getMessage());
+        }
+    }
+    public void imgUrlList(String imgUrl,String title,String classify,String actors,String details){
+
+        String folderPath = FILE_UPLOAD_PATH_IMG;
+        File file=new File(folderPath);
+        if (!file.exists()){
+            file.mkdirs();
+        }
+
+        // 获取文件扩展名
+        String type;
+        type = imgUrl.substring(imgUrl.lastIndexOf(".") + 1);
+        if (type.length()>4){
+            type = "jpg";
+        }
+        String UUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + type;
+        String destinationPath = folderPath+ File.separator + UUID; // 本地文件路径
+        // 将反斜杠替换为正斜杠
+        String destinationPaths = destinationPath.replaceAll("\\\\", "/");
+        out.println("==="+destinationPaths);
+        try {
+            String  url="http://localhost:9090/files/images/"+UUID;
+            //下载
+
+            Map<String, Object> stringObjectMap = downLoadImage(imgUrl, destinationPaths,UUID);
+
+            Acquire acquire=new Acquire();
+            acquire.setDescription(details);
+            acquire.setName(title);
+            acquire.setClassify(classify);
+            acquire.setActors(actors);
+            acquire.setCover(url);
+            acquireMapper.insert(acquire);
+            out.println("Image downloaded successfully: " + destinationPaths);
+        } catch (Exception e) {
+            err.println("Error downloading image: " + e.getMessage());
         }
     }
     private Images getFileByMd5(String md5) {

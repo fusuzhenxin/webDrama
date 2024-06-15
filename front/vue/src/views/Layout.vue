@@ -3,7 +3,7 @@
     <div class="container">
       <el-container>
         <el-header style="background-color: black;width: 1160px;margin-left :20px;padding: 0px;">
-          <div>
+          <div class="nav-list">
             <navigation />
             <!-- router-view 用于显示当前路由对应的组件内容 -->
           </div>
@@ -86,7 +86,6 @@ body {
   width: 100%;
   height: 30px;
   list-style: none;
-  background-color: gold;
   z-index: 1000;
 }
 

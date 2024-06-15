@@ -1,7 +1,7 @@
 <template>
   <div class="container" style="min-height: 100%; padding-bottom: 100px;">
     <el-container>
-      <el-header >
+      <el-header style="padding: 0px;">
       <Aside/>
       </el-header>
       <el-container>

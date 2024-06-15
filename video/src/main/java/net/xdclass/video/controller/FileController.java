@@ -53,6 +53,14 @@ public class FileController {
             + "files" + java.io.File.separator
             + "video" + java.io.File.separator;
 
+    private static final String FILE_UPLOAD_PATH2 = getProperty("user.dir")
+            + java.io.File.separator
+            + "src" + java.io.File.separator
+            + "main" + java.io.File.separator
+            + "resources" + java.io.File.separator
+            + "files" + java.io.File.separator
+            + "images" + java.io.File.separator;
+
     //单个视频上传
     @PostMapping("/upload")
     public  String upload(@RequestParam MultipartFile file,String name,String diversity) throws IOException{
@@ -259,6 +267,32 @@ public class FileController {
         }
 
     }
+    //删除原有图片
+    @PostMapping("/cover2")
+    private String saveCoverImages2(@RequestBody JsonNode requestBody) throws IOException{
+        // 使用 Jackson ObjectMapper 将请求体解析为 JsonNode 对象
+        // 然后从 JsonNode 中提取 cover 参数的值
+
+        String cover = requestBody.get("params").get("cover").asText();
+        String fileName = cover.substring(cover.lastIndexOf("/") + 1);
+        String url=FILE_UPLOAD_PATH2+fileName;
+        // 删除静态资源图片
+        boolean deleted = deleteImage(url);
+
+        if (deleted) {
+            try {
+                imagesMapper.deleteImagsUrl(cover);
+
+            }catch (Exception e) {
+                throw new ServerException("删除失败");
+            }
+            return "图片删除成功";
+        } else {
+            return "图片删除失败";
+        }
+
+    }
+
 
     //删除图片方法
     @SneakyThrows

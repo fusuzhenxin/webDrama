@@ -1,6 +1,6 @@
 <template>
   <br>
-  <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+  <div class="container" style="min-height: 100%; padding-bottom: 100px;background-color: black;">
     <el-container>
       <el-header>
         <h1 style="color: white;margin-left: -20px;font-size: 30px;padding: 0px;margin-bottom: 30px;margin-top: 0px;">推荐热门</h1>
@@ -14,14 +14,18 @@
               </div>
             </div>
             <p style="color: white;">{{ drama.name }}</p>
+            <p style="color: hsla(0, 0%, 100%, .5);font-size: 14px;">{{ drama.classify }}</p>
           </div>
         </div>
       </el-header>
     </el-container>
    <div>
 
-      <el-main style="margin-top: 700px">
+      <el-main style="margin-top: 700px;padding: 0px;">
         <h1 style="color: white;margin-left: -30px;font-size: 30px;margin-top: 0px;">逆袭</h1>
+        <div style="display: flex;">
+
+    
         <div class="drama-list1">
           <div v-for="(drama, index) in VideoData" :key="index" class="drama-card1" @click="goToDramaDetail(drama.detailsId,drama.name)">
             <div class="image-wrapper">
@@ -32,8 +36,47 @@
               </div>
             </div>
             <p style="color: white;">{{ drama.name }}</p>
+            <p style="color: hsla(0, 0%, 100%, .5);font-size: 14px;">{{ drama.classify }}</p>
           </div>
         </div>
+        <el-row>
+          <el-col :span="12">
+  <div class="grid-content bg-purple">
+    <el-card class="box-card5">
+      <el-text style="margin-top: -25px; font-size: 28px; color: #222; margin-left:10px; color: white;">周排行榜</el-text>
+      <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+      <!-- 单独处理第一个元素 -->
+      <div v-if="loadFindTop10Details.length > 0">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].id)">
+          <div style="display: flex; align-items: center;margin-bottom: 40px;">
+            <i class="num">1</i>
+            <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 130px; height: 200px;margin-top: 15px;">
+            <span style="color: #fff; font-size: 20px; margin-left: 10px; margin-top: 18px; height: 40px;">{{ loadFindTop10Details[0].name }}</span>
+          </div>
+        </div>
+        <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+      </div>
+      <!-- 循环处理剩余元素 -->
+      <div v-for="(drama, index) in loadFindTop10Details.slice(1)" :key="index">
+        <div class="drama-card2" @click="gotoloadFindTop10(drama.name,drama.id)">
+          <div style="display: flex; align-items: center;">
+            <p style="color: #aaa; font-weight: 700; font-size: 25px; margin-left: 5px; margin-top: 18px;">{{ index + 2 }}</p>
+            <span style="color: #fff; font-size: 20px; margin-left: 10px; margin-top: 3px; height: 40px;">{{ drama.name }}</span>
+          </div>
+        </div>
+        <hr v-if="index < loadFindTop10Details.slice(1).length - 1" style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+      </div>
+      <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
+      <h1 style="text-align: center; margin-top: 0px; font-size: 23px; color: white; margin-left: -10px;">更多></h1>
+    </el-card>
+  </div>
+</el-col>
+
+
+
+
+    </el-row>
+    </div>
       </el-main>
    </div>
   </div>
@@ -41,12 +84,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import request from "@/utils/request";
 import { useRouter } from 'vue-router';
 import '@fortawesome/fontawesome-free/css/all.css'; // 在 JavaScript 文件中引入
-
-
+const loadFindTop10Details=ref([])
+const sort=ref('推荐热门')
+  const indicate=ref('/')
 // Reactive data for short dramas
 const shortDramas = ref([]);
 const VideoData = ref([]);
@@ -85,10 +129,20 @@ const router = useRouter();
 // Method to navigate to drama detail page
 const goToDramaDetail = (dramaId,name) => {
   // Navigate to the detail page and pass drama ID as route parameter
-  router.push({ name: 'videoDetail', params: { detailsId: dramaId ,name: name} });
+  router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
   
 };
+const gotoloadFindTop10 =(name,id) =>{
+  router.push({name: 'VideoStory',params: {id: id,name:name,sort: sort.value,indicate: indicate.value}})
+}
+const loadFindTop10 =async()=>{
+  const  res=await request.get('/news/top10')
+  loadFindTop10Details.value=res.data.data
+}
 
+onMounted(()=>{
+  loadFindTop10()
+});
 </script>
 
 <style scoped>
@@ -105,18 +159,18 @@ h1 {
 }
 
 .drama-list {
-  width: 1190px;
+  width: 1159px;
   height: auto;
   margin-left: -32px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-
+  margin-left: -24px;
 }
 .drama-list1 {
-  width: 860px;
+  width: 848px;
   height: auto;
-  margin-left: -40px;
+  margin-left: -20px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
@@ -131,7 +185,7 @@ h1 {
   box-sizing: border-box;
 }
 .drama-card1 {
-   width: calc(32% - 17px);
+  width: calc(29% - -1px);
    margin-left: 10px;
    margin-bottom: 20px;
    padding: 10px;
@@ -140,7 +194,7 @@ h1 {
 
 .drama-card .image-wrapper {
   position: relative; /* 设置父元素为相对定位，使播放按钮的绝对定位相对于图片 */
-  width: 190px;
+  width: 184px;
   height: 266px;
   overflow: hidden;
   border-radius: 5px;
@@ -163,7 +217,7 @@ h1 {
 }
 
 .drama-card1 img {
-  width: 100%;
+  width: 95%;
   height: 100%;
   object-fit: cover;
 }
@@ -192,5 +246,31 @@ h1 {
 .play-button i {
   color: white;
   font-size: 24px;
+}
+.box-card5{
+  background-color: rgba(27, 25, 25, 0.7); /* 设置背景颜色透明度 */
+    width: 300px;
+    height: 940px;
+    margin-left: 50px;
+    margin-top: 20px;
+    --el-card-border-color: 0
+    
+}
+.drama-card2{
+  height: 40px;
+  margin-bottom: 20px;
+  text-align: center;
+  
+}
+.num{
+  line-height: 29px;
+    text-align: center;
+    width: 36px;
+    height: 35px;
+    background-color: #ff443f;
+    color: #fff;
+    position: absolute;
+    margin-left: 10px;
+    margin-top: -149px;
 }
 </style>

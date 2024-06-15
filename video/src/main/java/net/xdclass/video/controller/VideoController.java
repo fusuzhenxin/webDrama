@@ -1,6 +1,13 @@
 package net.xdclass.video.controller;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.xdclass.video.common.Result;
 import net.xdclass.video.conf.DownloadProgressManager;
+import net.xdclass.video.entity.Acquire;
+import net.xdclass.video.entity.Admin;
+import net.xdclass.video.entity.Details;
+import net.xdclass.video.mapper.AcquireMapper;
+import net.xdclass.video.service.AcquireService;
 import net.xdclass.video.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +22,10 @@ public class VideoController {
 
     @Autowired
     private VideoService videoService;
-
-
+    @Autowired
+    private AcquireMapper acquireMapper;
+    @Autowired
+    private AcquireService acquireService;
     //获取这个剧有多少集
     @GetMapping("/diversity")
     public Result diversitys(@RequestParam String name){
@@ -37,25 +46,51 @@ public class VideoController {
     }
 
     //除了短剧走这个爬虫接口
-    @GetMapping("/save")
-    public Result save(@RequestParam String name,String classify){
-        videoService.saveList(name,classify);
-        return Result.success();
-    }
-
+//    @GetMapping("/save")
+//    public Result save(@RequestParam String name,String classify){
+//        videoService.saveList(name,classify);
+//        return Result.success();
+//    }
 
     @GetMapping("/startDownload")
-    public String startDownload(@RequestParam String name) {
+    public String startDownload(@RequestParam String name,@RequestParam String classify) {
         String taskId = UUID.randomUUID().toString();
         new Thread(() -> {
             try {
-                videoService.saves(name,taskId);
+                videoService.saveList(name,classify,taskId);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
         return taskId;
     }
+    @GetMapping("/startDownloadOnyWay")
+    public String startDownloadOnyWay(@RequestParam String name,@RequestParam String classify) {
+        String taskId = UUID.randomUUID().toString();
+        new Thread(() -> {
+            try {
+                videoService.saveListOneway(name,classify,taskId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+        return taskId;
+    }
+    //短剧
+    @GetMapping("/startDownloads")
+    public String startDownload(@RequestParam String name) {
+        String taskId = UUID.randomUUID().toString();
+        new Thread(() -> {
+            try {
+                videoService.saves(name, taskId);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+        return taskId;
+    }
+
 
     @GetMapping("/progress")
     public SseEmitter progress(@RequestParam String taskId) {
@@ -79,7 +114,6 @@ public class VideoController {
         return emitter;
     }
 
-
     //短剧的爬虫接口
 //    @GetMapping("/saves")
 //    public Result url(@RequestParam String name){
@@ -87,5 +121,36 @@ public class VideoController {
 //        return Result.success();
 //    }
 
+//    @GetMapping("/acquire")
+//    public Result acquireList(@RequestParam String name){
+//        List<Details> diversity= videoService.seleteAcquireList(name);
+//        return Result.success(diversity);
+//    }
 
+    //把短剧详情信息全部存数据库
+    @GetMapping("/acquire")
+    public Result acquireList(){
+        List<Acquire> diversity= videoService.seleteAcquireLists();
+        return Result.success(diversity);
+    }
+    @GetMapping("/saveListAcquire")
+    public Result saveListAcquire(@RequestParam String name,@RequestParam String classify){
+        List<Acquire> diversity= videoService.saveListAcquire(name,classify);
+        return Result.success(diversity);
+    }
+
+    // //爬虫搜索短剧视频
+    @GetMapping("/page")
+    public Result findPage(@RequestParam(defaultValue = "") String name,
+                           @RequestParam Integer pageNum,
+                           @RequestParam Integer pageSize) {
+        //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
+        QueryWrapper<Acquire> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("id");
+        if (!"".equals(name)) {
+            queryWrapper.like("name", name);
+        }
+        Page<Acquire> page = acquireService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        return Result.success(page);
+    }
 }

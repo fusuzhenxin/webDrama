@@ -6,6 +6,7 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import lombok.SneakyThrows;
+import net.xdclass.video.entity.Acquire;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -47,21 +48,53 @@ class VideoApplicationTests {
     @SneakyThrows
     @Test
     void contextLoads() {
+        List<Acquire> acquireList=new ArrayList<>();
+
+        String title = null;
+        String classify=null;
+        String imgUrl=null;
+        String actors=null;
+        Integer id=1;
         try {
-            for (int page = 0; page < 250; page += 25) { // 每页显示25个电影，总共10页
-                String url = "https://movie.douban.com/top250?start=" + page;
-                Document document = Jsoup.connect(url).get();
-                Elements element = document.select("ol.grid_view li");
+            for (int i = 2; i < 187; i++) {
 
+                String urls = "https://www.kuaikaw.cn/browse/0/" + i;
+                out.println("正在爬取：" + urls);
+                //最外面的url
+                Document document = Jsoup.connect(urls).get();
+                Elements element = document.select(".BrowseList_itemBox__S5QRX");
                 for (Element elements : element) {
+                    //第二页详情页url
+                    String href = elements.select("a.image_imageScaleBox__JFwzM.BrowseList_imageBox__fPYH7").attr("href");
+                    String url1 = "https://www.kuaikaw.cn" + href;
+                    out.println(url1);
+                    Document document1 = Jsoup.connect(url1).get();
 
-                    String title = elements.select("span.title").text();
-                    String href = elements.select("div.pic a img").attr("src");
-                    System.out.println("Title: " + title);
-                    System.out.println("Link: " + href);
+                    Elements elements1 = document1.select("#__next > main");
+
+                    for (Element element1 : elements1) {
+
+                        Acquire acquire = new Acquire();
+                        String role;
+                        //剧名
+                        title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
+                        //分类
+                        classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
+                        //图片url
+                        imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
+                        //主演
+                        actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
+                        String url = "https://www.kuaikaw.cn" + imgUrl;
+                        //详情
+                        String details = element1.select(".adm-ellipsis.DramaDetail_intro__O7jEz").text();
+                        out.println(title);
+                        out.println(classify);
+                        out.println(imgUrl);
+                        out.println(details);
+                    }
                 }
             }
-        } catch (IOException e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

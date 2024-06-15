@@ -2,6 +2,7 @@
 
         <el-header style="height: 60px;">
           <el-menu :default-active="activeIndex" style="justify-content: center;background-color: black;border-bottom: 0px solid;" mode="horizontal" @select="handleMenuSelect">
+            <img style="width: 150px; height: 80px;margin-top: -5px;" src="@/assets/logo_transparent.png"  />
             <router-link to="/HelloWorld">
             <el-menu-item style="color: white;" index="HelloWorld">首页</el-menu-item>
           </router-link>
@@ -17,6 +18,9 @@
           <router-link to="/rebirth">
             <el-menu-item style="color: white;" index="rebirth">重生</el-menu-item>
           </router-link>
+          <router-link to="/Entertainment">
+              <el-menu-item style="color: white;" index="korean">娱乐新闻</el-menu-item>
+            </router-link>
             <router-link to="/korean">
               <el-menu-item style="color: white;" index="korean">韩剧</el-menu-item>
             </router-link>

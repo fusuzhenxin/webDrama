@@ -24,6 +24,12 @@ const routes = [
                 component: () => import('@/views/details/detailsList.vue'),
             },
 
+             //新闻资讯详情
+             {
+                path: 'NewsList',
+                component: () => import('@/views/News/NewsList.vue'),
+            },
+
 
             //admin
             {
