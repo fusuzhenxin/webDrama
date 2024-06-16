@@ -21,7 +21,11 @@ public class AdminController {
     private AdminMapper adminMapper;
 
 
-
+    /**
+     * 新增
+     * @param admin
+     * @return
+     */
     @PostMapping("/save")
     public Result save(@RequestBody Admin admin){
         admin.setPassword("123");
@@ -49,6 +53,7 @@ public class AdminController {
         return Result.success();
     }
 
+    //批量删除
     @PostMapping("/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids) {
         adminService.removeByIds(ids);

@@ -161,7 +161,7 @@ const deleteOldImage = async () => {
     const cover =NewCover.value
     console.log(cover,"===");
     // 发送请求删除原有图片
-    await request.post('http://localhost:9090/file/cover1', { params: { cover: cover } });
+    await request.post('http://localhost:9090/file/coverOne', { params: { cover: cover } });
     console.log("原有图片删除成功");
  
   } catch (error) {
