@@ -1,4 +1,4 @@
-package net.xdclass.video.listener;
+package net.xdclass.crawler.listener;
 
 public interface DownloadListener {
 

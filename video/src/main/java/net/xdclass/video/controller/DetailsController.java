@@ -34,14 +34,6 @@ public class DetailsController {
     @Autowired
     private ImagesMapper imagesMapper;
 
-
-    @PostMapping("/save")
-    public Result save(@RequestBody Details details){
-        detailsService.saveOrUpdate(details);
-        return Result.success();
-    }
-
-
     private static final String FILE_UPLOAD_PATH = getProperty("user.dir")
             + File.separator
             + "src" + File.separator
@@ -51,6 +43,12 @@ public class DetailsController {
             + "files" + File.separator
             + "image" + File.separator;
 
+
+    @PostMapping("/save")
+    public Result save(@RequestBody Details details){
+        detailsService.saveOrUpdate(details);
+        return Result.success();
+    }
 
 
     //上传图片
@@ -105,6 +103,7 @@ public class DetailsController {
 
     }
 
+    //通过剧名查找视频详情，详情页
     @GetMapping("/finAll")
     public Result finAll(String name){
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
@@ -120,7 +119,7 @@ public class DetailsController {
     }
 
 
-    //热门视频
+    //主页的推荐视频和详情页娱乐新闻的热门视频
     @GetMapping("/selectTop10")
     public Result selectTop10(@RequestParam String classify){
         QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
@@ -140,6 +139,7 @@ public class DetailsController {
         return Result.success(details);
     }
 
+    //搜索页面默认的剧
     @GetMapping("/selectAcquiesce")
     public Result selectAcquiesce(@RequestParam String classify){
         List<Details> details= detailsMapper.selectAcquiesce(classify);
@@ -191,6 +191,7 @@ public class DetailsController {
         return Result.success(page);
     }
 
+    //分页组件，搜索短剧
     @GetMapping("/page")
     public Result findPage(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,

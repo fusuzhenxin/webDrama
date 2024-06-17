@@ -110,7 +110,7 @@
                 <textarea class="comment_content fl" name="comment_content" style="background-color: #f5f5f5;width: 700px;height: 150px;" placeholder="老弟，整两句"></textarea>
                 <div style="display: flex;">
                     <p style="font-size: 18px;">还可以输入200字</p>
-                    <el-button style="margin-left: 455px;margin-top: 10px;width:115px;height: 40px;background-color: red;color:white">发布</el-button>
+                    <el-button style="margin-left: 455px;margin-top: 10px;width:115px;height: 40px;background-color: red;color:white" @click="gotoPublish">发布</el-button>
                 </div> 
                 <div class="pagination">
                 <el-button>首页</el-button>
@@ -312,6 +312,11 @@ const initVideoName = () => {
     indicate.value = localStorage.getItem('indicate');
   }
 };
+
+//评论发布
+const gotoPublish=async()=>{
+ alert('谢谢你的评论，我们需要审核一下')
+}
 //正在播出
 const loadFindCollectTop10=async()=>{
   const res = await request.get('/news/collectTop10')

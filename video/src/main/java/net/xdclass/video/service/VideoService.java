@@ -15,15 +15,15 @@ public interface VideoService extends IService<Video> {
 
     String seleteEpisodeUrl(String videoName, Integer episodeNumber);
 
-    void saveList(String name, String classify,String taskId);
+//    void saveList(String name, String classify,String taskId);
 
-    void saves(String name,String taskId);
+//    void saves(String name,String taskId);
 
-    List<Details> seleteAcquireList(String name);
+//    List<Details> seleteAcquireList(String name);
 
-    List<Acquire> seleteAcquireLists();
+//    List<Acquire> seleteAcquireLists();
 
-    List<Acquire> saveListAcquire(String name, String classify);
+//    List<Acquire> saveListAcquire(String name, String classify);
 
-    void saveListOneway(String name, String classify, String taskId);
+//    void saveListOneway(String name, String classify, String taskId);
 }

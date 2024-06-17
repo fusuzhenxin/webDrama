@@ -59,6 +59,7 @@ public class NewsController {
         Page<News> page = newsService.page(new Page<>(pageNum, pageSize), queryWrapper);
         return Result.success(page);
     }
+
     //根据点赞数来排序热门视频
     @GetMapping("/top10")
     public Result findTop10(){

@@ -1,18 +1,19 @@
 package net.xdclass.crawler.download;
 
 
+
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import net.sourceforge.pinyin4j.PinyinHelper;
+import net.xdclass.crawler.listener.DownloadListener;
 import net.xdclass.crawler.utils.Constant;
 import net.xdclass.crawler.utils.Log;
-import net.xdclass.crawler.utils.MediaFormat;
 import net.xdclass.crawler.utils.StringUtils;
 import net.xdclass.video.Exception.M3u8Exception;
+
 import net.xdclass.video.entity.FileOne;
-import net.xdclass.video.listener.DownloadListener;
 import net.xdclass.video.service.FileService;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.springframework.stereotype.Component;
+import net.xdclass.crawler.utils.MediaFormat;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -23,7 +24,6 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -33,7 +33,8 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static net.xdclass.video.utils.Constant.FILESEPARATOR;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.springframework.stereotype.Component;
 
 @Component
 public class M3u8DownloadFactory {
@@ -159,7 +160,7 @@ public class M3u8DownloadFactory {
 //            if (!file1.exists())
 //                file1.mkdirs();
             //执行多线程下载
-            uniqueDir=dir+FILESEPARATOR+pinyin+FILESEPARATOR+fileName;
+            uniqueDir=dir+ Constant.FILESEPARATOR+pinyin+ Constant.FILESEPARATOR+fileName;
             File file1 = new File(uniqueDir);
             if (!file1.exists())
                 file1.mkdirs();
@@ -243,21 +244,21 @@ public class M3u8DownloadFactory {
                 // 将标题转换为拼音
                 String pinyin = convertToPinyin(title);
                 // 根据拼音创建文件夹
-                String destDir = dir + FILESEPARATOR +pinyin+FILESEPARATOR+ fileName;
-                File dir = new File(destDir);
+                String destDir = dir + Constant.FILESEPARATOR +pinyin+ Constant.FILESEPARATOR+ fileName;
+                java.io.File dir = new java.io.File(destDir);
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
                 // 合并后的视频文件路径
                 //fileName是uuid
-                String outputFile = destDir + File.separator + fileName + ".mp4";
+                String outputFile = destDir + java.io.File.separator + fileName + ".mp4";
                 System.out.println("Output File: " + outputFile);
 
                 // Write input file list to a temporary file
                 //临时文件，并将 TS 文件列表写入其中
-                Path fileListPath = Files.createTempFile("filelist", ".txt");
+                Path fileListPath = java.nio.file.Files.createTempFile("filelist", ".txt");
                 List<String> tsFiles = getTsFiles();
-                Files.write(fileListPath, tsFiles);
+                java.nio.file.Files.write(fileListPath, tsFiles);
 
                 // 构建 FFmpeg 命令
                 List<String> command = new ArrayList<>();
@@ -361,7 +362,7 @@ public class M3u8DownloadFactory {
                 }
 
                 // Delete the temporary file
-                Files.delete(fileListPath);
+                java.nio.file.Files.delete(fileListPath);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -439,7 +440,7 @@ public class M3u8DownloadFactory {
                 int count = 1;
                 HttpURLConnection httpURLConnection = null;
                 //xy为未解密的ts片段，如果存在，则删除
-                File file2 = new File(dir + FILESEPARATOR +pinyin+FILESEPARATOR+fileName+FILESEPARATOR+ i + ".xy");
+                File file2 = new File(dir + Constant.FILESEPARATOR +pinyin+ Constant.FILESEPARATOR+fileName+ Constant.FILESEPARATOR+ i + ".xy");
                 if (file2.exists())
                     file2.delete();
                 OutputStream outputStream = null; // 输出流，用于写入未解密的 ts 片段
@@ -501,7 +502,7 @@ public class M3u8DownloadFactory {
                         //把文件内容读取到字节数组中
                         //它读取 .xy 文件中的数据，并将其写入新的 .xyz 文件中。下面是这段代码的详细解析：
                         inputStream1.read(bytes);
-                        File file = new File(dir + FILESEPARATOR +pinyin+FILESEPARATOR+fileName+FILESEPARATOR+  i + ".xyz");
+                        File file = new File(dir + Constant.FILESEPARATOR +pinyin+ Constant.FILESEPARATOR+fileName+ Constant.FILESEPARATOR+  i + ".xyz");
                         // 输出流，用于写入解密后的 ts 片段
                         outputStream1 = new FileOutputStream(file);
                         //开始解密ts片段，这里我们把ts后缀改为了xyz，改不改都一样

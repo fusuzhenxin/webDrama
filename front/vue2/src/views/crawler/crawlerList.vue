@@ -124,12 +124,12 @@ const  loadAdminPage= async () =>{
       return;
     }
     if (item.value === "短剧") {
-      const res= await request.get('/videos/page',{params: {pageNum: pageNum.value,pageSize: pageSize.value,name:searchQuery.value}})
+      const res= await request.get('/crawler/page',{params: {pageNum: pageNum.value,pageSize: pageSize.value,name:searchQuery.value}})
     tableData.value = res.data.data.records
     total.value = res.data.data.total
     return; // 现在先返回，不发起任何请求
   }
-    const res=await request.get('http://localhost:9090/videos/saveListAcquire',{params:{name:searchQuery.value,classify: item.value}})
+    const res=await request.get('http://localhost:9090/crawler/saveListAcquire',{params:{name:searchQuery.value,classify: item.value}})
     tableData.value = res.data.data
       console.log(res.data);
   }catch (error){
@@ -158,14 +158,14 @@ const  handEdit =async(row) =>{
     }
     let res;
     if (item.value === "短剧") {
-    res=await request.get('http://localhost:9090/videos/startDownloads',{params:{name:form.value.name}})
+    res=await request.get('http://localhost:9090/crawler/startDownloads',{params:{name:form.value.name}})
     taskId.value = res.data
     localStorage.setItem('taskId',taskId.value);
       console.log(res.data);
       listenProgress();
     return; // 现在先返回，不发起任何请求
   }
-    res=await request.get('/videos/startDownloadOnyWay',{params:{name:form.value.name,classify:form.value.classify}})
+    res=await request.get('/crawler/startDownloadOnyWay',{params:{name:form.value.name,classify:form.value.classify}})
     taskId.value=res.data
     localStorage.setItem('taskId',taskId.value);
     console.log("=====================",res.data);
@@ -198,7 +198,7 @@ const handleSelectionChange = (val) => {
 const listenProgress = () => {
   if (!taskId.value) return;
 
-  const eventSource = new EventSource(`http://localhost:9090/videos/progress?taskId=${taskId.value}`);
+  const eventSource = new EventSource(`http://localhost:9090/crawler/progress?taskId=${taskId.value}`);
 
   eventSource.onmessage = (event) => {
     
@@ -250,7 +250,7 @@ const onButtonClick=async()=>{
     }
   let res;
   if (item.value === "短剧") {
-    res=await request.get('http://localhost:9090/videos/startDownloads',{params:{name:searchQuery.value}})
+    res=await request.get('http://localhost:9090/crawler/startDownloads',{params:{name:searchQuery.value}})
     taskId.value = res.data
     localStorage.setItem('taskId',taskId.value);
       console.log(res.data);
@@ -258,7 +258,7 @@ const onButtonClick=async()=>{
     return; // 现在先返回，不发起任何请求
   }
   // res=await request.get('/videos/save',{params:{name:searchQuery.value,classify: item.value}});
-     res=await request.get('/videos/startDownload',{params:{name:searchQuery.value,classify: item.value}});
+     res=await request.get('/crawler/startDownload',{params:{name:searchQuery.value,classify: item.value}});
      taskId.value = res.data
      localStorage.setItem('taskId',taskId.value);
       console.log(res.data);
