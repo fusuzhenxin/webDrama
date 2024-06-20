@@ -47,7 +47,7 @@
       <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
       <!-- 单独处理第一个元素 -->
       <div v-if="loadFindTop10Details.length > 0">
-        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].id)">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].detailsId)">
           <div style="display: flex; align-items: center;margin-bottom: 40px;">
             <i class="num">1</i>
             <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 130px; height: 200px;margin-top: 15px;">
@@ -58,7 +58,7 @@
       </div>
       <!-- 循环处理剩余元素 -->
       <div v-for="(drama, index) in loadFindTop10Details.slice(1)" :key="index">
-        <div class="drama-card2" @click="gotoloadFindTop10(drama.name,drama.id)">
+        <div class="drama-card2" @click="gotoloadFindTop10(drama.name,drama.detailsId)">
           <div style="display: flex; align-items: center;">
             <p style="color: #aaa; font-weight: 700; font-size: 25px; margin-left: 5px; margin-top: 18px;">{{ index + 2 }}</p>
             <span style="color: #fff; font-size: 20px; margin-left: 10px; margin-top: 3px; height: 40px;">{{ drama.name }}</span>
@@ -111,7 +111,7 @@ const loadShortDramas = async (classify) => {
 const loadVideoData = async (classify) => {
   try {
     // Fetch short drama data
-    const res = await request.get('/details/selectTop8', { params: { classify: classify } });
+    const res = await request.get('/details/selectTopSix', { params: { classify: classify } });
     // If successful, update the short drama data
     VideoData.value = res.data.data;
     console.log("====",VideoData.value)
@@ -128,16 +128,20 @@ const router = useRouter();
 
 // Method to navigate to drama detail page
 const goToDramaDetail = (dramaId,name) => {
+  request.post(`/news/click/${dramaId}`)
   // Navigate to the detail page and pass drama ID as route parameter
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
   
 };
-const gotoloadFindTop10 =(name,id) =>{
-  router.push({name: 'VideoStory',params: {id: id,name:name,sort: sort.value,indicate: indicate.value}})
+const gotoloadFindTop10 =(name,detailsId) =>{
+  request.post(`/news/click/${detailsId}`)
+  console.log("/////",detailsId);
+  router.push({name: 'VideoStory',params: {id: detailsId,name:name,sort: sort.value,indicate: indicate.value}})
 }
 const loadFindTop10 =async()=>{
   const  res=await request.get('/news/top10')
   loadFindTop10Details.value=res.data.data
+  console.log("===loadFindTop10Details===",res.data.data); 
 }
 
 onMounted(()=>{
@@ -250,7 +254,7 @@ h1 {
 .box-card5{
   background-color: rgba(27, 25, 25, 0.7); /* 设置背景颜色透明度 */
     width: 300px;
-    height: 940px;
+    height: 1040px;
     margin-left: 50px;
     margin-top: 20px;
     --el-card-border-color: 0

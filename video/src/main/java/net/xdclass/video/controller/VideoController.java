@@ -1,20 +1,11 @@
 package net.xdclass.video.controller;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.xdclass.video.common.Result;
-import net.xdclass.video.conf.DownloadProgressManager;
-import net.xdclass.video.entity.Acquire;
-import net.xdclass.video.entity.Admin;
-import net.xdclass.video.entity.Details;
 import net.xdclass.video.mapper.AcquireMapper;
 import net.xdclass.video.service.AcquireService;
 import net.xdclass.video.service.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/videos")
@@ -26,6 +17,8 @@ public class VideoController {
     private AcquireMapper acquireMapper;
     @Autowired
     private AcquireService acquireService;
+    @Autowired
+    private RedisTemplate redisTemplate;
     //获取这个剧有多少集
     @GetMapping("/diversity")
     public Result diversitys(@RequestParam String name){
@@ -36,13 +29,23 @@ public class VideoController {
     //获取每集url
     @GetMapping("/{videoName}/episode/{episodeNumber}")
     public Result getEpisodeUrl(@PathVariable String videoName, @PathVariable Integer episodeNumber) {
-        // 根据 videoName 和 episodeNumber 获取视频的 URL
-        String videoUrl = videoService.seleteEpisodeUrl(videoName, episodeNumber);
+        String EpisodeUrl="EpisodeUrl:"+videoName+":"+"第"+episodeNumber+"集";
 
-        if (videoUrl == null) {
-            return Result.error("Video not found");
+        Object  EpisodeUrlList= redisTemplate.opsForValue().get(EpisodeUrl);
+        if (EpisodeUrlList == null){
+            // 根据 videoName 和 episodeNumber 获取视频的 URL
+            String videoUrl = videoService.seleteEpisodeUrl(videoName, episodeNumber);
+            redisTemplate.opsForValue().set(EpisodeUrl,EpisodeUrlList);
+            return Result.success(videoUrl);
         }
-        return Result.success(videoUrl);
+//        // 根据 videoName 和 episodeNumber 获取视频的 URL
+//        String videoUrl = videoService.seleteEpisodeUrl(videoName, episodeNumber);
+//
+//        if (videoUrl == null) {
+//            return Result.error("Video not found");
+//        }
+//        return Result.success(videoUrl);
+        return Result.success(EpisodeUrlList);
     }
 
     //除了短剧走这个爬虫接口

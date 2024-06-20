@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.xdclass.crawler.service.CrawlerService;
 import net.xdclass.video.common.Result;
-import net.xdclass.video.conf.DownloadProgressManager;
+import net.xdclass.video.config.DownloadProgressManager;
 import net.xdclass.video.entity.Acquire;
 import net.xdclass.video.service.AcquireService;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -24,6 +26,9 @@ public class CrawlerController {
 
     @Autowired
     private AcquireService acquireService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     //其他剧的同时爬取多个视频接口
     @GetMapping("/startDownload")
@@ -108,13 +113,30 @@ public class CrawlerController {
     public Result findPage(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
                            @RequestParam Integer pageSize) {
-        //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
-        QueryWrapper<Acquire> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name);
+
+        String AcquireKey="Acquire::"+name+":"+"pageNum:"+pageNum+"-"+"pageSize"+pageSize;
+        Object AcquireList = redisTemplate.opsForValue().get(AcquireKey);
+        if (AcquireList == null){
+            //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
+            QueryWrapper<Acquire> queryWrapper = new QueryWrapper<>();
+            queryWrapper.orderByDesc("id");
+            if (!"".equals(name)) {
+                queryWrapper.like("name", name);
+            }
+            Page<Acquire> page = acquireService.page(new Page<>(pageNum, pageSize), queryWrapper);
+            if (page!=null){
+                redisTemplate.opsForValue().set(AcquireKey,page);
+                return Result.success(page);
+            }
         }
-        Page<Acquire> page = acquireService.page(new Page<>(pageNum, pageSize), queryWrapper);
-        return Result.success(page);
+//        //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
+//        QueryWrapper<Acquire> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.orderByDesc("id");
+//        if (!"".equals(name)) {
+//            queryWrapper.like("name", name);
+//        }
+//        Page<Acquire> page = acquireService.page(new Page<>(pageNum, pageSize), queryWrapper);
+//        return Result.success(page);
+        return Result.success(AcquireList);
     }
 }

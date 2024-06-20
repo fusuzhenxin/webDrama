@@ -5,10 +5,11 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import net.sourceforge.pinyin4j.PinyinHelper;
+import net.xdclass.video.entity.MyData;
 import net.xdclass.crawler.listener.DownloadListener;
 import net.xdclass.crawler.main.M3u8Main;
 import net.xdclass.crawler.service.CrawlerService;
-import net.xdclass.video.conf.DownloadProgressManager;
+import net.xdclass.video.config.DownloadProgressManager;
 import net.xdclass.video.entity.*;
 import net.xdclass.video.mapper.*;
 import net.xdclass.video.service.FileService;
@@ -38,6 +39,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.System.*;
 import static java.lang.System.out;
@@ -402,75 +405,86 @@ public class CrawlerServiceImpl implements CrawlerService{
     @Override
     public void saves(String name, String taskId) {
         final BlockingQueue<MyData> blockingQueue=new LinkedBlockingQueue<>(20);
-        producer=new Thread(()->{
+        producer=new Thread(()-> {
             ChromeOptions options = new ChromeOptions();
+            String urls;
 //        options.addArguments("--headless"); // Set Chrome to run in headless mode
             chromeDriver = new ChromeDriver(options);
-            try {
 
-                String urls = "https://www.kuaikaw.cn/search/?searchValue=" + name;
-                out.println("正在爬取：" + urls);
-                //最外面的url
-                Document document = Jsoup.connect(urls).get();
-                Elements element = document.select(".TagBookList_tagItem__xL2IA");
-                for (Element elements : element) {
-                    //第二页详情页url
-                    String href = elements.select("a.TagBookList_totalChapterNum__CHaGs").attr("href");
-                    String url1 = "https://www.kuaikaw.cn" + href;
-                    Document document1 = Jsoup.connect(url1).get();
-
-                    Elements elements1 = document1.select("#__next > main");
-                    for (Element element1 : elements1) {
-                        String role;
-                        //剧名
-                        String title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
-                        //分类
-                        String classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
-                        //图片url
-                        String imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
-                        //主演
-                        String actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
-                        String url = "https://www.kuaikaw.cn" + imgUrl;
-                        //详情
-                        String details = element1.select(".DramaDetail_intro__O7jEz").text();
-                        String diversity=element1.select("a.pcDrama_catalogItem__4Q_C0").text();
-
-                        if (actors == null) {
-                            role = "";
-                        } else {
-                            role = actors;
+                try {
+                    for (int i = 1; i < 5; i++) {
+                        if (i==1){
+                            urls = "https://www.kuaikaw.cn/search/?searchValue=" + name;
+                        }else {
+                          urls = "https://www.kuaikaw.cn/search/"+i+"?searchValue=" + name;
                         }
-                        out.println(url + ":" + title + ":" + details + ":" + classify);
-                        imgUrl(url, title, classify, role, details);
-                        //分集类名
-                        Elements elements2 = element1.select(".pcDrama_catalogItem__4Q_C0");
-                        for (Element element2 : elements2) {
-                            if (downloadedEpisodes.get() >= 5) { // 限制下载5集
-                                out.println("已下载5集，结束下载。");
-                                downloadedEpisodes.set(0);
-                                QueryWrapper<Acquire> acquireQueryWrapper=new QueryWrapper<>();
-                                acquireQueryWrapper.eq("name", name);
-                                Acquire acquire = acquireMapper.selectOne(acquireQueryWrapper);
-                                if (acquire==null) {
-                                    break; // 继续下一个剧
-                                } else{
-                                    return;
+                        out.println("正在爬取：" + urls);
+                        //最外面的url
+                        Document document = Jsoup.connect(urls).get();
+                        Elements element = document.select(".TagBookList_tagItem__xL2IA");
+                        for (Element elements : element) {
+                            //第二页详情页url
+                            String href = elements.select("a.TagBookList_totalChapterNum__CHaGs").attr("href");
+                            String url1 = "https://www.kuaikaw.cn" + href;
+                            Document document1 = Jsoup.connect(url1).get();
+
+                            Elements elements1 = document1.select("#__next > main");
+                            for (Element element1 : elements1) {
+                                String role;
+                                //剧名
+                                String title = element1.select("h1.DramaDetail_bookName__7bcjB").text();
+                                //分类
+                                String classify = element1.select("a.DramaDetail_tagItem__L546Y").text();
+                                //图片url
+                                String imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
+                                //主演
+                                String actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
+                                String url = "https://www.kuaikaw.cn" + imgUrl;
+                                //详情
+                                String details = element1.select(".DramaDetail_intro__O7jEz").text();
+
+                                if (actors == null) {
+                                    role = "";
+                                } else {
+                                    role = actors;
                                 }
-                            }
-                            //每一集页面url
-                            String href1 = element2.select("a.pcDrama_catalogItem__4Q_C0").attr("href");
-                            String videoUrl = "https://www.kuaikaw.cn" + href1;
-                            setProperty("webdriver.chrome.driver", chromedriverPath);
+                                out.println(url + ":" + title + ":" + details + ":" + classify);
+                                imgUrl(url, title, classify, role, details);
+                                //分集类名
+                                Elements elements2 = element1.select(".pcDrama_catalogItem__4Q_C0");
+                                for (Element element2 : elements2) {
+                                    //第几集
+                                    String episode = element2.select("a.pcDrama_catalogItem__4Q_C0").text();
+                                    //只取数字
+                                    String number = String.valueOf(convertChineseToArabic(episode));
+                                    out.println(episode);
+                                    out.println("=="+number);
+                                    if (downloadedEpisodes.get() >= 5) { // 限制下载5集
+                                        out.println("已下载5集，结束下载。");
+                                        downloadedEpisodes.set(0);
+                                        QueryWrapper<Acquire> acquireQueryWrapper = new QueryWrapper<>();
+                                        acquireQueryWrapper.eq("name", name);
+                                        Acquire acquire = acquireMapper.selectOne(acquireQueryWrapper);
+                                        if (acquire == null) {
+                                            break; // 继续下一个剧
+                                        } else {
+                                            return;
+                                        }
+                                    }
+                                    //每一集页面url
+                                    String href1 = element2.select("a.pcDrama_catalogItem__4Q_C0").attr("href");
+                                    String videoUrl = "https://www.kuaikaw.cn" + href1;
+                                    setProperty("webdriver.chrome.driver", chromedriverPath);
 
-                            chromeDriver.get(videoUrl);
+                                    chromeDriver.get(videoUrl);
 
-                            // 等待页面加载完成
-                            waitForPageLoad(chromeDriver);
-                            List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playVideo > video"));
-                            for (WebElement element3 : elements3) {
-                                //视频url
-                                String Url = element3.getAttribute("src");
-                                out.println(Url);
+                                    // 等待页面加载完成
+                                    waitForPageLoad(chromeDriver);
+                                    List<WebElement> elements3 = chromeDriver.findElements(By.cssSelector("#playVideo > video"));
+                                    for (WebElement element3 : elements3) {
+                                        //视频url
+                                        String Url = element3.getAttribute("src");
+                                        out.println(Url);
 //                            download(Url, title, taskId, () -> {
 //                                // 重置进度
 //                                DownloadProgressManager.setProgress(taskId, 0);
@@ -479,28 +493,25 @@ public class CrawlerServiceImpl implements CrawlerService{
 //                                }
 //                            });
 
-                                //然后通过线程池来下载，同时下载多个视频
+                                        //然后通过线程池来下载，同时下载多个视频
 
-                                downloadedEpisodes.incrementAndGet();
-                                MyData myData = new MyData();
-                                myData.setTitle(title);
-                                myData.setUrl(Url);
-                                blockingQueue.put(myData);
-                                out.println(myData);
+                                        downloadedEpisodes.incrementAndGet();
+                                        MyData myData = new MyData();
+                                        myData.setTitle(title);
+                                        myData.setUrl(Url);
+                                        myData.setNumber(number);
+                                        blockingQueue.put(myData);
+                                        out.println(myData);
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }  finally {
-                chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
-                try {
-                    blockingQueue.put(null); // 生产者结束后放入标志值通知消费者生产者已结束
-                } catch (InterruptedException e) {
+                } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    chromeDriver.quit(); // 确保在所有操作完成后关闭ChromeDriver
                 }
-            }
         });
 
         consumer=new Thread(()->{
@@ -517,6 +528,7 @@ public class CrawlerServiceImpl implements CrawlerService{
                 }
                 String title = poll.getTitle();
                 String url = poll.getUrl();
+                String number = poll.getNumber();
                 out.println("===============================================================================" + poll);
                 threadPoolExecutor.submit(()-> {
                     try {
@@ -592,7 +604,7 @@ public class CrawlerServiceImpl implements CrawlerService{
                         files.setSize(fileSize);
                         files.setType("mp4");
                         files.setOriginalFilename(url);
-                        files.setDiversity(String.valueOf(diversity));
+                        files.setDiversity(number);
                         fileMapper.insert(files);
                         out.println("下载成功");
                         DownloadProgressManager.setProgress(taskId, 0);
@@ -773,7 +785,7 @@ public class CrawlerServiceImpl implements CrawlerService{
     }
 
     private void waitForPageLoad(WebDriver driver) {
-        new WebDriverWait(driver, Duration.ofSeconds(20)).until(webDriver ->
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(webDriver ->
                 ((JavascriptExecutor) webDriver).executeScript("return document.readyState").equals("complete"));
     }
 
@@ -1055,4 +1067,49 @@ public class CrawlerServiceImpl implements CrawlerService{
         }
     }
 
+    public static int convertChineseToArabic(String chineseNumber) {
+        // 使用正则表达式匹配汉字数字
+        Pattern pattern = Pattern.compile("[一二三四五六七八九十]+"); // 匹配汉字数字
+        Matcher matcher = pattern.matcher(chineseNumber);
+
+        if (matcher.find()) {
+            String chineseDigit = matcher.group(); // 获取匹配到的汉字数字
+            return chineseToArabic(chineseDigit); // 转换为阿拉伯数字
+        } else {
+            return -1; // 没有匹配到汉字数字，返回默认值
+        }
+    }
+
+    /**
+     * 将单个汉字数字转换为阿拉伯数字
+     * @param chineseDigit 单个汉字数字，如 "五"
+     * @return 对应的阿拉伯数字，如果无法识别则返回 -1 或其他适当的默认值
+     */
+    public static int chineseToArabic(String chineseDigit) {
+        switch (chineseDigit) {
+            case "一":
+                return 1;
+            case "二":
+                return 2;
+            case "三":
+                return 3;
+            case "四":
+                return 4;
+            case "五":
+                return 5;
+            case "六":
+                return 6;
+            case "七":
+                return 7;
+            case "八":
+                return 8;
+            case "九":
+                return 9;
+            case "十":
+                return 10;
+            default:
+                return -1; // 如果无法识别，返回默认值
+        }
+    }
 }
+

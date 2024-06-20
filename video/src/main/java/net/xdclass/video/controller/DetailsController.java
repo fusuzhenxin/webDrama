@@ -14,6 +14,7 @@ import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.service.DetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +43,8 @@ public class DetailsController {
             + File.separator
             + "files" + File.separator
             + "image" + File.separator;
-
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @PostMapping("/save")
     public Result save(@RequestBody Details details){
@@ -106,10 +108,21 @@ public class DetailsController {
     //通过剧名查找视频详情，详情页
     @GetMapping("/finAll")
     public Result finAll(String name){
-        QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
-        queryWrapper.eq("name",name);
-        Details details = detailsMapper.selectOne(queryWrapper);
-        return Result.success(details);
+        String VideoKey="details:"+name;
+        Object detailsOne =redisTemplate.opsForValue().get(VideoKey);
+        if (detailsOne == null){
+            QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+            queryWrapper.eq("name",name);
+            Details details = detailsMapper.selectOne(queryWrapper);
+            if (details!=null){
+                redisTemplate.opsForValue().set(VideoKey,details);
+                return Result.success(details);
+            }
+        }
+        return Result.success(detailsOne);
+        //        Details details = detailsMapper.selectOne(queryWrapper);
+//        return Result.success(details);
+
     }
 
     @GetMapping("/finAllName")
@@ -122,21 +135,39 @@ public class DetailsController {
     //主页的推荐视频和详情页娱乐新闻的热门视频
     @GetMapping("/selectTop10")
     public Result selectTop10(@RequestParam String classify){
-        QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
-        queryWrapper.like("classify", classify);
-        queryWrapper.last("limit 12"); // Limit to top 10
-        List<Details> details= detailsMapper.selectList(queryWrapper);
-        return Result.success(details);
+        String CoverList="coverList:"+classify;
+        Object List = redisTemplate.opsForValue().get(CoverList);
+        if (List == null){
+            QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("classify", classify);
+            queryWrapper.last("limit 12"); // Limit to top 10
+            List<Details> details= detailsMapper.selectList(queryWrapper);
+            if (details!=null){
+                redisTemplate.opsForValue().set(CoverList,details);
+                return Result.success(details);
+            }
+        }
+        return Result.success(List);
+//        List<Details> details= detailsMapper.selectList(queryWrapper);
+//        return Result.success(details);
     }
 
     //首页的大视频
-    @GetMapping("/selectTop8")
-    public Result selectTop8(@RequestParam String classify){
-        QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
-        queryWrapper.like("classify", classify);
-        queryWrapper.last("limit 6"); // Limit to top 8
-        List<Details> details= detailsMapper.selectList(queryWrapper);
-        return Result.success(details);
+    @GetMapping("/selectTopSix")
+    public Result selectTopSix(@RequestParam String classify){
+        String selectTopSix="selectTopSix:"+classify;
+        Object selectTopList = redisTemplate.opsForValue().get(selectTopSix);
+        if (selectTopList == null){
+            QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("classify", classify);
+            queryWrapper.last("limit 6"); // Limit to top 8
+            List<Details> details= detailsMapper.selectList(queryWrapper);
+            if (details !=null){
+                redisTemplate.opsForValue().set(selectTopSix,details);
+                return Result.success(details);
+            }
+        }
+        return Result.success(selectTopList);
     }
 
     //搜索页面默认的剧
@@ -188,6 +219,7 @@ public class DetailsController {
         }
 
         Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
+
         return Result.success(page);
     }
 

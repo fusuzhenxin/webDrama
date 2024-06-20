@@ -1,4 +1,4 @@
-package net.xdclass.video.conf;
+package net.xdclass.video.config;
 
 
 import org.springframework.context.annotation.Configuration;

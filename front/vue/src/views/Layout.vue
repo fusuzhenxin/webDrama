@@ -94,6 +94,7 @@ body {
   width: 100%;
   height: 482px;
   margin-top: -20px;
+  
 }
 
 .carousel-image {

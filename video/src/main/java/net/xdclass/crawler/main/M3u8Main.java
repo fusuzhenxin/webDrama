@@ -115,7 +115,7 @@ import cn.hutool.core.util.IdUtil;
 import net.xdclass.crawler.download.M3u8DownloadFactory;
 import net.xdclass.crawler.listener.DownloadListener;
 import net.xdclass.crawler.utils.Constant;
-import net.xdclass.video.conf.DownloadProgressManager;
+import net.xdclass.video.config.DownloadProgressManager;
 import net.xdclass.video.service.FileService;
 
 import java.io.File;

@@ -212,7 +212,7 @@
                 </div>
                       <!-- 单独处理第一个元素 -->
       <div v-if="loadFindTop10Details.length > 0">
-        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].id)">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].detailsId)">
           <div style="display: flex; align-items: center;margin-bottom: 14px;">
             <i class="num">1</i>
             <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 95px; height: 140px;margin-top: -6px;">
@@ -222,8 +222,8 @@
         <hr style="background-color: black;">
       </div>
       <!-- 循环处理剩余元素 -->
-      <div v-for="(drama, index) in loadFindTop10Details.slice(0,4)" :key="index">
-        <div class="drama-card3" @click="gotoloadFindTop10(drama.name,drama.id)">
+      <div v-for="(drama, index) in loadFindTop10Details.slice(1,5)" :key="index">
+        <div class="drama-card3" @click="gotoloadFindTop10(drama.name,drama.detailsId)">
           <div style="display: flex; align-items: center;">
             <p style="color: #aaa; font-weight: 700; font-size: 20px; margin-left: 5px; margin-top: 8px;">{{ index + 2 }}</p>
             <span style="color: black; font-size: 20px; margin-left: 10px; margin-top: -4px; height: 40px;">{{ drama.name }}</span>
@@ -243,7 +243,7 @@
             <h3 style="color: red; font-size: 26px; width: 10px;margin-left: -22px;margin-top: -5px;">|</h3>
              <h3 style="margin-top: -10px;margin-left: 10px;">最新资讯</h3>
                 </div>
-                <div v-for="(drama, index) in findUpdateTimePage.slice(0,7)" :key="index" class="drama-card2" @click="goToDramaDetail(drama.id, drama.name)">
+                <div v-for="(drama, index) in findUpdateTimePage.slice(0,7)" :key="index" class="drama-card2" @click="goToNewsDetails(drama.id, drama.name)">
         <el-row style="margin-bottom: 100px">
           <el-col :span="3">
             <div class="grid-content bg-purple" style="width: 10px" >
@@ -367,11 +367,14 @@ const goToEpisode=async(episode)=>{
     router.push({ name: 'videoDetail', params: { id: episode,name: videoName.value } });
 }
 //热门视频
-const gotoloadFindTop10=(name,id)=>{
-  router.push({ name: 'VideoStory', params: { id: id ,name: name,sort: sort.value,indicate:indicate.value}});
+const gotoloadFindTop10=(name,dramaId)=>{
+  request.post(`/news/click/${dramaId}`)
+  console.log("idid ",dramaId);
+  router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 const goToDramaDetail=async(dramaId,name)=>{
-
+  request.post(`/news/click/${dramaId}`)
+  console.log("---",dramaId);
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 //正在播出

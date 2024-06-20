@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
+import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.Images;
 import net.xdclass.video.entity.News;
 import net.xdclass.video.mapper.ImagesMapper;
@@ -17,6 +18,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -46,6 +48,9 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
     private NewsMapper newsMapper;
     @Autowired
     private ImagesMapper imagesMapper;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     @SneakyThrows
     @Override
     public void saveList() {
@@ -82,6 +87,8 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
             }
         }
     }
+
+
     public void imgUrl(String imgUrl,String title ,String time ,String source,String text){
 
         String folderPath = FILE_UPLOAD_PATH;
@@ -221,6 +228,22 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
         List<Images> filesList=imagesMapper.selectList(queryWrapper);
         return filesList.size() == 0 ? null : filesList.get(0);
 
+    }
+
+    @Override
+    public void preloadTop10News() {
+        //数据库中查询出数据存到redis
+        List<Details> top10News = newsMapper.findTop10ByScore();
+        for(Details details: top10News){
+            //存到redis
+            stringRedisTemplate.opsForZSet().add("news:rank",String.valueOf(details.getDetailsId()), details.getScore());
+        }
+    }
+
+    //更新点击数量
+    @Override
+    public void incrementVideoScore(Long detailsId) {
+        stringRedisTemplate.opsForZSet().incrementScore("news:rank",String.valueOf(detailsId),1);
     }
 
 

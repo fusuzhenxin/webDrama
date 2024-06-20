@@ -47,7 +47,7 @@
     <div class="container" style="min-height: 100%; padding-bottom: 100px;">
     <!-- 显示搜索结果的内容 -->
     <div v-if="shortDramas.length > 0">
-      <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.id, drama.name)">
+      <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.detailsId, drama.name)">
         <!-- ... -->
       </div>
     </div>
@@ -56,7 +56,7 @@
       <!-- 这里可以添加一些其他内容作为默认显示 -->
         <br>
       <h1>没有这</h1>
-          <div v-for="(drama, index) in videoData" :key="index" class="drama-card" @click="goToDramaDetail(drama.id,drama.name)">
+          <div v-for="(drama, index) in videoData" :key="index" class="drama-card" @click="goToDramaDetail(drama.detailsId,drama.name)">
           <el-row>
           <el-col :span="7">
             <div class="grid-content bg-purple" style="width: 400px" >
@@ -80,7 +80,7 @@
         </div>
       </div>
 
-  <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.id, drama.name)">
+  <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.detailsId, drama.name)">
         <el-row style="margin-bottom: 100px">
           <el-col :span="7">
             <div class="grid-content bg-purple" style="width: 400px" >
@@ -189,6 +189,8 @@ onMounted(() => {
 
 });
 const goToDramaDetail = (dramaId,name) => {
+  request.post(`/news/click/${dramaId}`)
+  console.log("---",dramaId);
   // Navigate to the detail page and pass drama ID as route parameter
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name} });
 };

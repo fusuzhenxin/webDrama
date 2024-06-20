@@ -1,4 +1,4 @@
-package net.xdclass.video.conf;
+package net.xdclass.video.config;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

@@ -1,8 +1,6 @@
 package net.xdclass.crawler.utils;
 
-import net.xdclass.video.conf.DownloadProgressManager;
-
-import java.io.PrintWriter;
+import net.xdclass.video.config.DownloadProgressManager;
 
 public class DownloadTask {
     private int lastProgress = -1; // 将 lastProgress 作为实例变量

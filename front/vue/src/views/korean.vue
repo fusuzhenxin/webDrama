@@ -14,7 +14,7 @@
             <div class="drama-section">
               <br>
               <div class="drama-list">
-                <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.id,drama.name)">
+                <div v-for="(drama, index) in shortDramas" :key="index" class="drama-card" @click="goToDramaDetail(drama.detailsId,drama.name)">
                   <div class="image-wrapper">
                     <img :src="drama.cover" :alt="drama.name" class="drama-image">
                     <!-- 调整播放按钮样式 -->
@@ -65,7 +65,7 @@
   
   // Method to navigate to drama detail page
   const goToDramaDetail = (dramaId,name) => {
-    console.log("---",name);
+    request.post(`/news/click/${dramaId}`)
     console.log("idid ",dramaId);
     // Navigate to the detail page and pass drama ID as route parameter
     router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
