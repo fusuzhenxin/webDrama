@@ -236,15 +236,28 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
         List<Details> top10News = newsMapper.findTop10ByScore();
         for(Details details: top10News){
             //存到redis
-            stringRedisTemplate.opsForZSet().add("news:rank",String.valueOf(details.getDetailsId()), details.getScore());
+            stringRedisTemplate.opsForZSet().add("video:rank",String.valueOf(details.getDetailsId()), details.getScore());
+        }
+    }
+
+    @Override
+    public void preloadNewsIds() {
+        List<News> newsList=newsMapper.findNewsIds();
+        for (News news: newsList){
+            stringRedisTemplate.opsForZSet().add("news:rank",String.valueOf(news.getId()),news.getScore());
         }
     }
 
     //更新点击数量
     @Override
     public void incrementVideoScore(Long detailsId) {
-        stringRedisTemplate.opsForZSet().incrementScore("news:rank",String.valueOf(detailsId),1);
+        stringRedisTemplate.opsForZSet().incrementScore("video:rank",String.valueOf(detailsId),1);
     }
 
+    //更新新闻点击数量
+    @Override
+    public void incrementNewsScore(Long id) {
+        stringRedisTemplate.opsForZSet().incrementScore("news:rank",String.valueOf(id),1);
+    }
 
 }

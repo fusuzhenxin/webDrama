@@ -24,16 +24,16 @@
             <router-link to="/korean">
               <el-menu-item style="color: white;" index="korean">韩剧</el-menu-item>
             </router-link>
-            <div class="flex gap-4 items-center">
+            <div class="flex gap-4 items-center" >
               <el-input
                   v-model="searchQuery"
-                  style="width: 240px;margin-top: 10px;margin-left: 30px;height: 34px;"
+                  style="width: 240px;margin-top: 10px;margin-left: 30px;height: 34px; background-color: black;"
                   size="large"
                   placeholder="搜索"
                   :prefix-icon="Search"
               />
             </div>
-            <el-button @click="search" style="width: 34px;height: 34px;margin-top: 10px;margin-left: 10px;border-radius: 2px"><img style="width: 20px;height: 20px;" src="../assets/1.png"></el-button>
+            <el-button @click="search" style="width: 34px;height: 34px;margin-top: 10px;margin-left: 10px;border-radius: 2px;background-color: black"><img style="width: 20px;height: 20px;" src="../assets/1.png"></el-button>
             <!-- router-view 用于显示当前路由对应的组件内容 -->
 
           </el-menu>
@@ -58,5 +58,7 @@ const search =() =>{
 </script>
 
 <style scoped>
-
+.el-input--large .el-input__wrapper{
+  background-color: black
+}
 </style>

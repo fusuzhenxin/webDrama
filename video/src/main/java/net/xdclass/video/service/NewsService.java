@@ -8,5 +8,9 @@ public interface NewsService extends IService<News> {
 
     void preloadTop10News();
 
+    void preloadNewsIds();
+
     void incrementVideoScore(Long detailsId);
+
+    void incrementNewsScore(Long id);
 }

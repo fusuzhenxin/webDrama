@@ -1,28 +1,43 @@
 <template>
-  <div class="outer-container" style="background-color: black;">
+  <div class="outer-container" style="background-color: black">
     <div class="container">
       <el-container>
-        <el-header style="background-color: black;width: 1160px;margin-left :20px;padding: 0px;">
+        <el-header
+          style="
+            background-color: black;
+            width: 1160px;
+            margin-left: 20px;
+            padding: 0px;
+          "
+        >
           <div class="nav-list">
             <navigation />
             <!-- router-view 用于显示当前路由对应的组件内容 -->
           </div>
         </el-header>
         <el-container>
-          <el-main style="overflow: hidden;">
+          <el-main style="overflow: hidden">
             <!-- 身体 -->
             <van-swipe
               class="my-swipe"
               :autoplay="3000"
               indicator-color="white"
-              style="background-color: transparent;"
+              style="background-color: transparent"
             >
               <!-- 更换图片 -->
               <van-swipe-item>
-                <img class="carousel-image" src="@/assets/img.png" alt="Image 1" />
+                <img
+                  class="carousel-image"
+                  src="@/assets/img.png"
+                  alt="Image 1"
+                />
               </van-swipe-item>
               <van-swipe-item>
-                <img class="carousel-image" src="@/assets/3.jpg" alt="Image 2" />
+                <img
+                  class="carousel-image"
+                  src="@/assets/3.jpg"
+                  alt="Image 2"
+                />
               </van-swipe-item>
             </van-swipe>
             <HelloWorld />
@@ -33,15 +48,11 @@
   </div>
 </template>
 
-
 <script setup>
 import Navigation from "@/components/navigation.vue";
 import HelloWorld from "@/components/HelloWorld.vue";
 
-
 // const currentPage = ref(1);
-
-
 
 // const handleCurrentChange = () => {
 //   // 处理当前页改变事件
@@ -94,7 +105,6 @@ body {
   width: 100%;
   height: 482px;
   margin-top: -20px;
-  
 }
 
 .carousel-image {

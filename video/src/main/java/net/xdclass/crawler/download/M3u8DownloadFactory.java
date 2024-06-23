@@ -393,8 +393,6 @@ public class M3u8DownloadFactory {
             }
         }
 
-
-
         // 获取所有的ts文件
         private List<String> getTsFiles() {
             List<String> tsFiles = new ArrayList<>();

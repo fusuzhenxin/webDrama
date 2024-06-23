@@ -56,28 +56,24 @@
 
         <el-menu-item index="/crawlerList">视频详情列表</el-menu-item>
       </el-sub-menu>
-      <div class="demo-type">
-    <div>
-      <el-avatar
+      <el-avatar style="margin-left:750px"
         src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
       />
-      <el-dropdown>
-        <span style="margin-top: 15px;">
-      <span style="color: white">Dropdown</span>
+      <el-dropdown style="width: 10px">
+        <span style="margin-top: 15px; justify-content: flex-end;height: 10PX;">
+      <span style="color: white">DDD</span>
       <el-icon class="el-icon--right">
         <arrow-down />
       </el-icon>
     </span>
     <template #dropdown>
       <el-dropdown-menu>
-        <el-dropdown-item>Action 1</el-dropdown-item>
-        <el-dropdown-item>Action 2</el-dropdown-item>
+        <el-dropdown-item>登出</el-dropdown-item>
+        <el-dropdown-item>我的信息</el-dropdown-item>
         <el-dropdown-item>Action 3</el-dropdown-item>
       </el-dropdown-menu>
     </template>
   </el-dropdown>
-    </div>
-  </div>
   </el-menu>
 
 </template>
@@ -91,7 +87,7 @@ const handleSelect = () => {
 
 <style scoped>
 .demo-type {
-
+margin-left: 100px;
 }
 .demo-type > div {
   flex: 1;

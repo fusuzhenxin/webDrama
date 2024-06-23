@@ -20,6 +20,7 @@ public class News {
     private String source;//来源
     private String description;
     private String cover;//封面
+    private Double score;
 
     @TableField("update_time")
     private String updateTime;

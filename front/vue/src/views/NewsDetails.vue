@@ -147,7 +147,7 @@
             <h3 style="color: red; font-size: 26px; width: 10px;margin-left: -22px;margin-top: -5px;">|</h3>
              <h3 style="margin-top: -10px;margin-left: 10px;">正在播出</h3>
                 </div>
-                <div v-for="(drama,index) in loadFindCollectTopDetails" :key="index" class="drama-card10"  @click="gotoCollectTop(drama.name, drama.id)">
+                <div v-for="(drama,index) in loadFindCollectTopDetails" :key="index" class="drama-card10"  @click="gotoCollectTop(drama.name, drama.detailsId)">
                 <span>{{ drama.name }}</span>
                </div>
             </el-card>
@@ -261,7 +261,7 @@ const formatDate=(dateString)=> {
 const browsePage = async () => {
   try {
     const res = await request.get('/news/browsePage', { params: { pageSize: pageSize.value,pageNum: pageNum.value} });
-    browseDetails.value = res.data.data.records;
+    browseDetails.value = res.data.data;
     console.log("================================",res.data.data);
   } catch (error) {
     console.error('Error searching:', error);
@@ -332,19 +332,21 @@ onMounted(() => {
   loadFindCollectTop10()
 });
 const goToDramaDetail=async(dramaId,name)=>{
-
+  request.post(`/news/click/${dramaId}`)
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 //正在播出
 const gotoCollectTop=async(name,id)=>{
+  request.post(`/news/click/${id}`)
   router.push({name:'VideoStory',params:{id: id,name: name,sort: sort.value,indicate: indicate.value}})
 }
 const goToNewsDetail=async(dramaId,name)=>{
-
+  request.post(`/news/NewsClick/${dramaId}`)
 router.push({ name: 'NewsDetails', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 //热门视频
 const gotoloadFindTop10=(name,id)=>{
+  request.post(`/news/click/${id}`)
   router.push({ name: 'VideoStory', params: { id: id ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 const fetchData = async () => {
