@@ -1,7 +1,7 @@
 <template>
     <div class="container" style="min-height: 100%; padding-bottom: 100px;">
       <div style="margin-bottom: 20px">
-        <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入用户名" v-model="username"></el-input>
+        <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入新闻名" v-model="name"></el-input>
         <el-button style="margin-left: 5px" type="primary" @click="loadAdminPage"><i class="el-icon-search"></i> 搜索</el-button>
         <el-button style="margin-left: 5px" type="warning" @click="reset" ><i class="el-icon-refresh"></i> 重置</el-button>
       </div>
@@ -122,7 +122,7 @@
   const multipleSelection = ref([]);
   const NewName=ref("")
   const NewCover=ref("");
-  const username=ref('');
+  const name=ref('');
   const form = ref({
     username: '',
     phone: ''
@@ -195,12 +195,12 @@ const handleImgUploadSuccess = (response) => {
   
   const reset = () => {
     // 添加重置逻辑
-    username.value='';
+    name.value='';
     loadAdminPage()
   };
   const loadAdminPage = async () =>{
     try {
-      const res= await request.get('/news/page',{params: {pageNum: pageNum.value,pageSize: pageSize.value,username: username.value}})
+      const res= await request.get('/news/paging',{params: {pageNum: pageNum.value,pageSize: pageSize.value,name: name.value}})
       tableData.value = res.data.data.records
       total.value = res.data.data.total
       console.log("----",res.data.data)

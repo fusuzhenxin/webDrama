@@ -210,4 +210,19 @@ public class NewsController {
         return Result.success();
     }
 
+    //模糊查询
+    @GetMapping("/paging")
+    public Result findPage(@RequestParam(defaultValue = "") String name,
+                           @RequestParam Integer pageNum,
+                           @RequestParam Integer pageSize) {
+        //QueryWrapper 来构建查询条件，并基于条件执行了分页查询
+        QueryWrapper<News> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("id");
+        if (!"".equals(name)) {
+            queryWrapper.like("username", name);
+        }
+        Page<News> page = newsService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        return Result.success(page);
+    }
+
 }

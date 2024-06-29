@@ -215,6 +215,7 @@ public class FileController {
         String md5 = SecureUtil.md5(file.getInputStream());
         String url;
         //这是生成的MD5 不是数据库拿的
+
         FileOne dbFiles = getFileByMd5(md5);
         if (dbFiles != null) {
             //检查服务器上是否已经存在对应的文件。如果不存在，则将文件保存到服务器上，并设置 URL。
@@ -329,7 +330,7 @@ public class FileController {
     }
 
     @PostMapping("/del/batch")
-    public Result deleteBatch(@RequestBody List<Integer> ids) {
+    public Result deleteBatch(@RequestBody List<Integer> ids){
         fileService.removeByIds(ids);
         return Result.success();
     }
