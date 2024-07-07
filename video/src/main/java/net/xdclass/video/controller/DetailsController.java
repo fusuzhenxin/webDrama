@@ -26,7 +26,6 @@ import java.util.List;
 import static java.lang.System.getProperty;
 
 @RestController
-@RequestMapping("/details")
 public class DetailsController {
     @Autowired
     private DetailsMapper detailsMapper;
@@ -54,7 +53,7 @@ public class DetailsController {
 
 
     //上传图片
-    @PostMapping("/description")
+    @PostMapping("/details/description")
     public Result  details(@RequestParam("cover") MultipartFile cover ,String name, String classify, String description, String actors) throws IOException {
         String originalFilename = cover.getOriginalFilename();
         String type = FileUtil.extName(originalFilename);
@@ -106,7 +105,7 @@ public class DetailsController {
     }
 
     //通过剧名查找视频详情，详情页
-    @GetMapping("/finAll")
+    @GetMapping("/details/finAll")
     public Result finAll(String name){
         String VideoKey="details:"+name;
         Object detailsOne =redisTemplate.opsForValue().get(VideoKey);
@@ -125,7 +124,7 @@ public class DetailsController {
 
     }
 
-    @GetMapping("/finAllName")
+    @GetMapping("/details/finAllName")
     public Result finAllName(@RequestParam String name){
         List<Details> detailsList=detailsService.finAllName(name);
         return Result.success(detailsList);
@@ -133,7 +132,7 @@ public class DetailsController {
 
 
     //主页的推荐视频和详情页娱乐新闻的热门视频
-    @GetMapping("/selectTop10")
+    @GetMapping("/details/selectTop10")
     public Result selectTop10(@RequestParam String classify){
         String CoverList="coverList:"+classify;
         Object List = redisTemplate.opsForValue().get(CoverList);
@@ -153,7 +152,7 @@ public class DetailsController {
     }
 
     //首页的大视频
-    @GetMapping("/selectTopSix")
+    @GetMapping("/details/selectTopSix")
     public Result selectTopSix(@RequestParam String classify){
         String selectTopSix="selectTopSix:"+classify;
         Object selectTopList = redisTemplate.opsForValue().get(selectTopSix);
@@ -171,39 +170,53 @@ public class DetailsController {
     }
 
     //搜索页面默认的剧
-    @GetMapping("/selectAcquiesce")
+    @GetMapping("/details/selectAcquiesce")
     public Result selectAcquiesce(@RequestParam String classify){
         List<Details> details= detailsMapper.selectAcquiesce(classify);
         return Result.success(details);
 
     }
     //点赞增加
-    @GetMapping("/likes")
+    @GetMapping("/details/likes")
     public Result likes(@RequestParam String name){
         Details details = detailsService.selectLikes(name);
         return Result.success(details.getQuantity());
     }
 
     //点赞删除
-    @GetMapping("/likesDelete")
+    @GetMapping("/details/likesDelete")
     public Result collectDelete(@RequestParam String name){
         return Result.success(detailsService.selectlikesDelete(name).getQuantity());
     }
 
     //收藏增加
-    @GetMapping("/collect")
+    @GetMapping("/details/collect")
     public Result Collect(@RequestParam String name){
         return Result.success(detailsService.selectCollect(name).getCollect());
     }
 
     //收藏取消
-    @GetMapping("/collectDelete")
+    @GetMapping("/details/collectDelete")
     public Result CollectDelete(@RequestParam String name){
         return Result.success(detailsService.selectCollectDelete(name).getCollect());
     }
 
+    //分页组件，搜索短剧
+    @GetMapping("/details/page")
+    public Result findPage(@RequestParam(defaultValue = "") String name,
+                           @RequestParam Integer pageNum,
+                           @RequestParam Integer pageSize){
+        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc("details_id");
+        if (!"".equals(name)) {
+            queryWrapper.like("name", name);
+        }
+        Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        return Result.success(page);
+    }
+
     //模糊查询
-    @GetMapping("/paging")
+    @GetMapping("/api/details/paging")
     public Result findPaging(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
                            @RequestParam Integer pageSize,
@@ -222,27 +235,13 @@ public class DetailsController {
 
         return Result.success(page);
     }
-
-    //分页组件，搜索短剧
-    @GetMapping("/page")
-    public Result findPage(@RequestParam(defaultValue = "") String name,
-                           @RequestParam Integer pageNum,
-                           @RequestParam Integer pageSize){
-        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("details_id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name);
-        }
-        Page<Details> page = detailsService.page(new Page<>(pageNum, pageSize), queryWrapper);
-        return Result.success(page);
-    }
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/details/{id}")
     public Result deleteById(@PathVariable Integer id){
         detailsService.removeById(id);
         return Result.success();
     }
     //批量删除
-    @PostMapping("/del/batch")
+    @PostMapping("/api/details/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids) {
         detailsService.removeByIds(ids);
         return Result.success();

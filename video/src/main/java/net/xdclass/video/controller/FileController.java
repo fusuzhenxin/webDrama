@@ -27,7 +27,6 @@ import java.util.List;
 import static java.lang.System.getProperty;
 
 @RestController
-@RequestMapping("/file")
 public class FileController {
 
     @Autowired
@@ -62,7 +61,7 @@ public class FileController {
             + "images" + java.io.File.separator;
 
     //单个视频上传
-    @PostMapping("/upload")
+    @PostMapping("/file/upload")
     public  String upload(@RequestParam MultipartFile file,String name,String diversity) throws IOException{
         String originalFilename= file.getOriginalFilename();
         String type= FileUtil.extName(originalFilename);
@@ -116,7 +115,7 @@ public class FileController {
     }
 
     //批量上传视频
-    @PostMapping("/uploadList")
+    @PostMapping("/file/uploadList")
     public List<String> uploads(@RequestParam("files") List<MultipartFile> files, String name) throws IOException {
 
         List<String> urls = new ArrayList<>();
@@ -204,7 +203,7 @@ public class FileController {
 
 
     //点照片上传时候已经把url返回到前端了，然后发送编辑请求
-    @PostMapping("/cover")
+    @PostMapping("/file/cover")
     private String saveCoverImages(@RequestParam MultipartFile file,String name) throws IOException{
 
         String originalFilename= file.getOriginalFilename();
@@ -244,7 +243,7 @@ public class FileController {
     }
 
     //删除原有图片
-    @PostMapping("/cover1")
+    @PostMapping("/file/cover1")
     private String saveCoverImages(@RequestBody JsonNode requestBody) throws IOException{
         // 使用 Jackson ObjectMapper 将请求体解析为 JsonNode 对象
         // 然后从 JsonNode 中提取 cover 参数的值
@@ -290,21 +289,20 @@ public class FileController {
             return false;
         }
     }
-
-    @GetMapping("/{id}")
+    //第一集url和短剧的信息
+    @GetMapping("/file/Inception")
+    public Result Inception(@RequestParam String name){
+        FileOne filesList=fileMapper.selectName(name);
+        return Result.success(filesList);
+    }
+    @GetMapping("/api/file/{id}")
     public Result findId(@PathVariable Integer id){
         FileOne files = fileMapper.selectById(id);
         return Result.success(files);
     }
 
-    //第一集url和短剧的信息
-    @GetMapping("/Inception")
-    public Result Inception(@RequestParam String name){
-       FileOne filesList=fileMapper.selectName(name);
-        return Result.success(filesList);
-    }
     //使用了 @RequestParam 注解来声明方法的参数，用于从请求中获取对应的参数值。
-    @GetMapping("/page")
+    @GetMapping("/api/file/page")
     public Result findPage(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
                            @RequestParam Integer pageSize,
@@ -323,13 +321,13 @@ public class FileController {
         return Result.success(page);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/file/{id}")
     public Result deleteById(@PathVariable Integer id){
         fileService.removeById(id);
         return Result.success();
     }
 
-    @PostMapping("/del/batch")
+    @PostMapping("/api/file/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids){
         fileService.removeByIds(ids);
         return Result.success();

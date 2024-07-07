@@ -1,7 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HelloWorld from '@/components/HelloWorld.vue'
 import Layout from "@/views/Layout.vue";
+
 const routes = [
+    {
+        path:'/login',
+        component: ()=>import('@/views/login.vue')
+    },
 
     {
         path: '/',
@@ -51,5 +56,6 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 });
+
 
 export default router;

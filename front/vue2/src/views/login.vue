@@ -1,0 +1,251 @@
+<template>
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="left-panel">
+          <div class="illustration">
+            <!-- Replace with your illustration -->
+            <img src="../assets/111.jpeg" alt="Decorative illustration">
+          </div>
+        </div>
+        <div class="right-panel">
+          <h1>{{ panelTitle }}</h1>
+          <p>{{ panelDescription }}</p>
+          <form @submit.prevent="handleSubmit">
+            <div class="input-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" v-model="username" required>
+            </div>
+            <div class="input-group">
+              <label for="password">Password</label>
+              <input type="password" id="password" v-model="password" required>
+            </div>
+            <div class="input-group" v-if="isRegistering">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" v-model="confirmPassword" required>
+            </div>
+            <div class="input-group">
+            <label for="rememberMe">Remember Me</label>
+            <input type="checkbox" id="rememberMe" v-model="rememberMe">
+          </div>
+            <a href="#" class="forgot-password">Forgot password?</a>
+            <button type="submit" class="submit-btn">{{ isRegistering ? 'Sign up' : 'Sign in' }}</button>
+          </form>
+          <div class="social-login">
+          </div>
+          <p class="switch-mode">
+            {{ isRegistering ? 'Already have an account?' : 'New Lovebird?' }}
+            <a href="#" @click.prevent="toggleMode">{{ isRegistering ? 'Sign in' : 'Create Account' }}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <script setup>
+
+import { ref, computed } from 'vue'
+import request from '@/utils/request';
+import router from '@/router/router';
+// import axios from 'axios';
+
+  const isRegistering = ref(false)
+  const username = ref('')
+  const password = ref('')
+  const confirmPassword = ref('')
+  const rememberMe = ref(false)
+  const panelTitle = computed(() => 
+    isRegistering.value ? 'Join our community' : 'Welcome back'
+  )
+  
+  const panelDescription = computed(() => 
+    isRegistering.value 
+      ? 'Create an account to start your journey with us.'
+      : 'Sign in to continue your experience with Lovebirds.'
+  )
+  
+  const toggleMode = () => {
+    isRegistering.value = !isRegistering.value
+    username.value = ''
+    password.value = ''
+    confirmPassword.value = ''
+  }
+  
+  const handleSubmit = () => {
+    if (isRegistering.value) {
+      handleRegister()
+    } else {
+      handleLogin()
+    }
+  } 
+  
+  const handleLogin = async () => {
+  try {
+    console.log('当前用户是：', username.value);
+
+    // 确保将数据传递给请求体而不是作为查询参数
+    const res = await request.post('/user/login', { 
+      userName: username.value, 
+      password: password.value, 
+    });
+    console.log('完整响应：', res);
+    if(res.data.code == 200){
+      console.log('当前用户是：', res.data.data.token);
+    const token= res.data.data.token
+    localStorage.setItem("token",token)
+    router.push('/')
+    console.log('完整响应：', res);
+    }
+    
+
+    // Login logic here
+    console.log('Logging in', username.value, password.value);
+  } catch (error) {
+    console.error('Error during login:', error);
+  }
+};
+
+  const handleRegister = () => {
+    // Registration logic here
+    if (password.value !== confirmPassword.value) {
+      console.error('Passwords do not match!')
+      return
+    }
+    console.log('Registering', username.value, password.value)
+  }
+  </script>
+  
+  <style scoped>
+  .auth-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+    padding: 20px;
+  }
+  
+  .auth-card {
+    display: flex;
+    width: 800px;
+    height: 600px;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .left-panel, .right-panel {
+    flex: 1;
+    padding: 40px;
+  }
+  
+  .left-panel {
+    background-color: whitesmoke;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .illustration {
+    margin-bottom: 20px;
+  }
+  
+  .illustration img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ddd;
+    margin: 0 4px;
+  }
+  
+  .dots span.active {
+    background-color: #333;
+  }
+  
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  h1 {
+    margin-bottom: 10px;
+  }
+  
+  .input-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+  
+  input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .forgot-password {
+    display: block;
+    text-align: right;
+    margin-bottom: 15px;
+    color: #666;
+    text-decoration: none;
+    font-size: 12px;
+  }
+  
+  .submit-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .social-login {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .google-btn img {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .switch-mode {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+  </style>
+  

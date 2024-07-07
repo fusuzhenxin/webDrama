@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/videos")
 public class VideoController {
 
     @Autowired
@@ -20,14 +19,14 @@ public class VideoController {
     @Autowired
     private RedisTemplate redisTemplate;
     //获取这个剧有多少集
-    @GetMapping("/diversity")
+    @GetMapping("/videos/diversity")
     public Result diversitys(@RequestParam String name){
        Integer diversity= videoService.seleteDiversitys(name);
        return Result.success(diversity);
     }
 
     //获取每集url
-    @GetMapping("/{videoName}/episode/{episodeNumber}")
+    @GetMapping("/videos/{videoName}/episode/{episodeNumber}")
     public Result getEpisodeUrl(@PathVariable String videoName, @PathVariable Integer episodeNumber) {
         String EpisodeUrl="EpisodeUrl:"+videoName+":"+"第"+episodeNumber+"集";
 

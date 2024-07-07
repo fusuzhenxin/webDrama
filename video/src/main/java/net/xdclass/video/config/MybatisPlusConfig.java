@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@MapperScan("net.xdclass.video.mapper")
+
 public class MybatisPlusConfig {
 
     // 最新版

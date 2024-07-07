@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
-@RequestMapping("/news")
 public class NewsController {
     @Autowired
     private NewsService newsService;
@@ -39,7 +38,7 @@ public class NewsController {
     }
 
     //根据浏览量
-    @GetMapping("/browsePage")
+    @GetMapping("/news/browsePage")
     public Result findBrowsePage(){
         Set<String> newsIds = stringRedisTemplate.opsForZSet().reverseRange("news:rank", 0, 9);
         if (newsIds == null || newsIds.isEmpty()){
@@ -81,7 +80,7 @@ public class NewsController {
     }
 
     //根据更新时间
-    @GetMapping("/updateTimePage")
+    @GetMapping("/news/updateTimePage")
     public Result findUpdateTimePage(@RequestParam Integer pageNum,
                                  @RequestParam Integer pageSize){
         QueryWrapper<News> queryWrapper = new QueryWrapper<>();
@@ -90,7 +89,7 @@ public class NewsController {
         return Result.success(page);
     }
 
-    @GetMapping("/page")
+    @GetMapping("/news/page")
     public Result findPage(@RequestParam Integer pageNum,
                            @RequestParam Integer pageSize){
         String newsKey="news:"+"pageNum:"+pageNum+"-"+"pageSize:"+pageSize;
@@ -109,7 +108,7 @@ public class NewsController {
     }
 
     //根据点赞数来排序热门视频
-    @GetMapping("/top10")
+    @GetMapping("/news/top10")
     public Result findTop10(){
         //尝试从redis获取前十的id
         Set<String> top10NewsIds = stringRedisTemplate.opsForZSet().reverseRange("video:rank", 0, 9);
@@ -165,27 +164,27 @@ public class NewsController {
      * @return
      */
     //模拟新闻点击
-    @PostMapping("/click/{detailsId}")
+    @PostMapping("/news/click/{detailsId}")
     public Result clickVideo(@PathVariable Integer detailsId){
         newsService.incrementVideoScore(Long.valueOf(detailsId));
         return Result.success();
     }
 
     //模拟新闻点击
-    @PostMapping("/NewsClick/{id}")
+    @PostMapping("/news/NewsClick/{id}")
     public Result clickNews(@PathVariable Integer id){
         newsService.incrementNewsScore(Long.valueOf(id));
         return Result.success();
     }
 
-    @GetMapping("/collectTop10")
+    @GetMapping("/news/collectTop10")
     public Result findCollectTop10(){
         List<Details> top10News = newsMapper.findTop10ByCollect();
         return Result.success(top10News);
     }
 
     //根据新闻标题获取内容
-    @GetMapping("/finAll")
+    @GetMapping("/news/finAll")
     public Result finAll(String name){
         QueryWrapper<News> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("name",name);
@@ -193,25 +192,25 @@ public class NewsController {
         return Result.success(details);
     }
 
-    @PostMapping("/save")
+    @PostMapping("/api/news/save")
     public Result save(@RequestBody News news){
         newsService.saveOrUpdate(news);
         return Result.success();
     }
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/news/{id}")
     public Result deleteById(@PathVariable Integer id){
         newsService.removeById(id);
         return Result.success();
     }
 
-    @PostMapping("/del/batch")
+    @PostMapping("/api/news/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids) {
         newsService.removeByIds(ids);
         return Result.success();
     }
 
     //模糊查询
-    @GetMapping("/paging")
+    @GetMapping("/api/news/paging")
     public Result findPage(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
                            @RequestParam Integer pageSize) {
