@@ -1,14 +1,14 @@
-package net.xdclass.crawler.service.Impl;
+package net.xdclass.video.crawler.service.Impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import net.sourceforge.pinyin4j.PinyinHelper;
+import net.xdclass.video.crawler.listener.DownloadListener;
+import net.xdclass.video.crawler.service.CrawlerService;
 import net.xdclass.video.entity.MyData;
-import net.xdclass.crawler.listener.DownloadListener;
-import net.xdclass.crawler.main.M3u8Main;
-import net.xdclass.crawler.service.CrawlerService;
+import net.xdclass.video.crawler.main.M3u8Main;
 import net.xdclass.video.config.DownloadProgressManager;
 import net.xdclass.video.entity.*;
 import net.xdclass.video.mapper.*;
@@ -46,7 +46,7 @@ import static java.lang.System.*;
 import static java.lang.System.out;
 
 @Service
-public class CrawlerServiceImpl implements CrawlerService{
+public class CrawlerServiceImpl implements CrawlerService {
     private VideoMapper videoMapper;
     @Autowired
     private DetailsMapper detailsMapper;
@@ -439,7 +439,7 @@ public class CrawlerServiceImpl implements CrawlerService{
                                 String imgUrl = element1.select("img.DramaDetail_bookCover__mvLQU").attr("src");
                                 //主演
                                 String actors = element1.select("a.TagBookList_bookAuthor__GAd_h > span").text();
-                                String url = "https://www.kuaikaw.cn" + imgUrl;
+                                String url = imgUrl;
                                 //详情
                                 String details = element1.select(".DramaDetail_intro__O7jEz").text();
 
@@ -755,6 +755,11 @@ public class CrawlerServiceImpl implements CrawlerService{
 
             Map<String, Object> stringObjectMap = downLoadImage(imgUrl, destinationPaths,UUID);
             String fileName = (String) stringObjectMap.get("fileName");
+            if (fileName==null){
+                fileName=imgUrl;
+            }else {
+               fileName=fileName;
+            }
             long fileSize = (long) stringObjectMap.get("fileSize");
             String md5 = (String) stringObjectMap.get("md5");
             String cover = (String) stringObjectMap.get("cover");

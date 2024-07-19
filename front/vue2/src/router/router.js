@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HelloWorld from '@/components/HelloWorld.vue'
 import Layout from "@/views/Layout.vue";
-
+import { ref } from 'vue'
 const routes = [
     {
         path:'/login',
@@ -46,6 +46,10 @@ const routes = [
                 path: 'crawlerList',
                 component: ()=>import('@/views/crawler/crawlerList.vue')
             },
+            {
+                path: 'personal',
+                component: ()=>import('@/views/personal.vue')
+            }
 
         ]
     }
@@ -57,5 +61,17 @@ const router = createRouter({
     routes
 });
 
-
+const token=ref(null);
+router.beforeEach((to, from, next) => {
+    if (to.path === '/login') {
+        next()
+     } else {
+     token.value = localStorage.getItem('token')
+    if (token.value === null) {
+     next('/login')
+     } else {
+     next()
+     }
+}
+})
 export default router;

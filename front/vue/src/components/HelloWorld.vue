@@ -67,7 +67,6 @@
         <hr v-if="index < loadFindTop10Details.slice(1).length - 1" style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
       </div>
       <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.3);">
-      <h1 style="text-align: center; margin-top: 0px; font-size: 23px; color: white; margin-left: -10px;">更多></h1>
     </el-card>
   </div>
 </el-col>
@@ -90,6 +89,7 @@ import { useRouter } from 'vue-router';
 import '@fortawesome/fontawesome-free/css/all.css'; // 在 JavaScript 文件中引入
 const loadFindTop10Details=ref([])
 const sort=ref('推荐热门')
+const userName=localStorage.getItem('userName')
   const indicate=ref('/')
 // Reactive data for short dramas
 const shortDramas = ref([]);
@@ -129,12 +129,21 @@ const router = useRouter();
 // Method to navigate to drama detail page
 const goToDramaDetail = (dramaId,name) => {
   request.post(`/news/click/${dramaId}`)
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
+  console.log(userName);
   // Navigate to the detail page and pass drama ID as route parameter
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
   
 };
 const gotoloadFindTop10 =(name,detailsId) =>{
   request.post(`/news/click/${detailsId}`)
+  request.post('/news/click/',{
+    id: detailsId,
+    username: userName
+  })
   console.log("/////",detailsId);
   router.push({name: 'VideoStory',params: {id: detailsId,name:name,sort: sort.value,indicate: indicate.value}})
 }

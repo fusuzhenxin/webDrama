@@ -1,5 +1,5 @@
 <template>
-    <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+    <div class="container" style=" padding-bottom: 100px;">
     
       <el-row :gutter="20">
         <el-col :span="10">
@@ -43,19 +43,19 @@
     @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="55" align="center"></el-table-column>
-      <el-table-column prop="id" label="编号" width="180"></el-table-column>
-      <el-table-column prop="name" label="剧名" width="180"></el-table-column>
+      <el-table-column prop="id" label="编号" width="100"></el-table-column>
+      <el-table-column prop="name" label="剧名" width="130"></el-table-column>
       <el-table-column prop="classify" label="分类" width="180"></el-table-column>
-      <el-table-column prop="cover" label="封面" width="180px">
+      <el-table-column prop="cover" label="封面" width="150px">
       
         <template v-slot="scope">
-          <el-image :src="scope.row.cover"></el-image>
+          <el-image :src="scope.row.cover" style="width: 80%"></el-image>
         </template>
       </el-table-column>
-      <el-table-column prop="description" label="描述" width="800px">
+      <el-table-column prop="description" label="描述" width="400px">
         <template v-slot="{ row }">
-          <!-- <span>{{ truncateString(row.description, 20) }}</span> -->
-          <span>{{row.description}}</span>
+          <span>{{ truncateString(row.description, 50) }}</span>
+          <!-- <span>{{row.description}}</span> -->
         </template>
       </el-table-column>
       <el-table-column label="操作" width="250">
@@ -108,14 +108,14 @@ onMounted(()=>{
 })
 
 
-// const truncateString = (str, maxLength) => {
-//   if (!str) return "";
-//   if (str.length <= maxLength) {
-//     return str;
-//   } else {
-//     return str.slice(0, maxLength) + "...";
-//   }
-// };
+const truncateString = (str, maxLength) => {
+  if (!str) return "";
+  if (str.length <= maxLength) {
+    return str;
+  } else {
+    return str.slice(0, maxLength) + "...";
+  }
+};
 
 const  loadAdminPage= async () =>{
   try {
@@ -129,7 +129,7 @@ const  loadAdminPage= async () =>{
     total.value = res.data.data.total
     return; // 现在先返回，不发起任何请求
   }
-    const res=await request.get('http://localhost:9090/crawler/saveListAcquire',{params:{name:searchQuery.value,classify: item.value}})
+    const res=await request.get('http://localhost:9090/api/crawler/saveListAcquire',{params:{name:searchQuery.value,classify: item.value}})
     tableData.value = res.data.data
       console.log(res.data);
   }catch (error){
@@ -158,7 +158,7 @@ const  handEdit =async(row) =>{
     }
     let res;
     if (item.value === "短剧") {
-    res=await request.get('http://localhost:9090/crawler/startDownloads',{params:{name:form.value.name}})
+    res=await request.get('http://localhost:9090/api/crawler/startDownloads',{params:{name:form.value.name}})
     taskId.value = res.data
     localStorage.setItem('taskId',taskId.value);
       console.log(res.data);
@@ -198,7 +198,7 @@ const handleSelectionChange = (val) => {
 const listenProgress = () => {
   if (!taskId.value) return;
 
-  const eventSource = new EventSource(`http://localhost:9090/crawler/progress?taskId=${taskId.value}`);
+  const eventSource = new EventSource(`http://localhost:9090/api/crawler/progress?taskId=${taskId.value}`);
 
   eventSource.onmessage = (event) => {
     
@@ -250,7 +250,7 @@ const onButtonClick=async()=>{
     }
   let res;
   if (item.value === "短剧") {
-    res=await request.get('http://localhost:9090/crawler/startDownloads',{params:{name:searchQuery.value}})
+    res=await request.get('http://localhost:9090/api/crawler/startDownloads',{params:{name:searchQuery.value}})
     taskId.value = res.data
     localStorage.setItem('taskId',taskId.value);
       console.log(res.data);

@@ -20,10 +20,11 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity  //启用 Spring Security 的 Web 安全支持并提供 Spring MVC 集成。
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    //PasswordEncoder 用于编码和验证密码，这里使用的是 BCryptPasswordEncoder。
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -37,6 +38,7 @@ public class SecurityConfig {
         return (web) -> web.ignoring().requestMatchers("/resources/**");
     }
 
+    //提供一个用于管理身份验证的 bean。
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -45,23 +47,33 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                //禁用
+                //基本身份验证
                 .httpBasic().disable()
                 //由于是前后端分离项目，所以要关闭csrf
                 .csrf().disable()
+                //自带的登录注册
                 .formLogin().disable()
                 .logout().disable()
 
                 // //由于是前后端分离项目，所以session是失效的，我们就不通过Session获取SecurityContext
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                        .requestMatchers("/**").permitAll()
+                        .requestMatchers("/apiOne/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/user/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/user/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/crawler/page").permitAll()
+//                        .requestMatchers(HttpMethod.POST,"/apiOne/user/userRegister").permitAll()
+                        .requestMatchers("/api/file/cover").permitAll()
+//                        .requestMatchers("/api/user/logout").permitAll()
+                        .requestMatchers("/apiOne/file/uploadList").permitAll()
                         .requestMatchers("/files/image/**").permitAll()
                         .requestMatchers("/files/images/**").permitAll()
                         .requestMatchers("/files/video/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/details/selectTop10").permitAll()
 //                        .requestMatchers( "/api/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        //拦截
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated());
         //---------------------------👇 设置security运行跨域访问 👇------------------

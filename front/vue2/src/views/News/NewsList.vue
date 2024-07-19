@@ -1,5 +1,5 @@
 <template>
-    <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+    <div class="container" style=" padding-bottom: 100px;">
       <div style="margin-bottom: 20px">
         <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入新闻名" v-model="name"></el-input>
         <el-button style="margin-left: 5px" type="primary" @click="loadAdminPage"><i class="el-icon-search"></i> 搜索</el-button>
@@ -25,10 +25,10 @@
   
       <el-table :data="tableData" style="width: 100%;" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="id" label="编号" width="180"></el-table-column>
-        <el-table-column prop="name" label="用户名" width="180"></el-table-column>
-        <el-table-column prop="browse" label="浏览" width="180"></el-table-column>
-        <el-table-column prop="source" label="来源" width="180"></el-table-column>
+        <el-table-column prop="id" label="编号" width="100"></el-table-column>
+        <el-table-column prop="name" label="用户名" width="150"></el-table-column>
+        <el-table-column prop="browse" label="浏览" width="120"></el-table-column>
+        <el-table-column prop="source" label="来源" width="120"></el-table-column>
         <el-table-column prop="description" label="描述" width="180px">
         <template v-slot="{ row }">
           <span>{{ truncateString(row.description, 20) }}</span>
@@ -76,7 +76,7 @@
           </el-form-item>
           <el-form-item prop="cover" label="封面图片">
           <el-upload
-            action="http://localhost:9090/file/cover"
+            action="http://localhost:9090/api/file/cover"
             ref="coverUpload"
             :data="getUploadData"
             :before-upload="beforeCoverUpload"
@@ -161,7 +161,7 @@ const deleteOldImage = async () => {
     const cover =NewCover.value
     console.log(cover,"===");
     // 发送请求删除原有图片
-    await request.post('http://localhost:9090/file/coverOne', { params: { cover: cover } });
+    await request.post('/file/coverOne', { params: { cover: cover } });
     console.log("原有图片删除成功");
  
   } catch (error) {
@@ -214,6 +214,7 @@ const handleImgUploadSuccess = (response) => {
   
   const  handEdit =(row) =>{
     form.value=JSON.parse(JSON.stringify(row))
+    NewCover.value=form.value.cover
     dialogVisible.value=true
   
   }

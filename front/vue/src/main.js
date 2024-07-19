@@ -6,7 +6,6 @@ import App from './App.vue'
 import 'vant/lib/index.css'; // 引入 vant 样式文件
 import { Swipe, SwipeItem } from 'vant'; // 引入 vant 中的 Swipe 和 SwipeItem 组件
 
-
 const app = createApp(App)
 
 // 全局注册 Swipe 和 SwipeItem 组件

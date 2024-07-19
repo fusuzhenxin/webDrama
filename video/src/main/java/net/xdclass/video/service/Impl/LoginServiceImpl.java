@@ -37,7 +37,7 @@ public class LoginServiceImpl implements LoginService {
     //ResponseResult和user是我们在domain目录写好的类
     public Result login(User user) {
 
-        //用户在登录页面输入的用户名和密码
+        //用户在登录页面输入的用户名和密码,把用户名和密码装在UsernamePasswordAuthenticationToken
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getUserName(),user.getPassword());
 
         //获取AuthenticationManager的authenticate方法来进行用户认证
@@ -48,8 +48,10 @@ public class LoginServiceImpl implements LoginService {
             throw new RuntimeException("登录失败");
         }
 
-        //如果认证通过，就使用userid生成一个jwt，然后把jwt存入ResponseResult后返回
+        //如果认证通过，就使用userid生成一个jwt，然后把jwt存入Result后返回
+        //从 Authentication 对象中提取经过身份验证的用户详细信息
         LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
+        //获取用户id
         String userid = loginUser.getXxuser().getId().toString();
         String jwt = JwtUtil.createJWT(userid);
 
@@ -57,6 +59,8 @@ public class LoginServiceImpl implements LoginService {
         //把完整的用户信息存入redis，其中userid作为key，注意存入redis的时候加了前缀 login:
         Map<String, String> map = new HashMap<>();
         map.put("token",jwt);
+        map.put("userName",user.getUserName());
+
         redisCache.setCacheObject("login:"+userid,loginUser);
         return Result.success(map);
     }
@@ -76,4 +80,6 @@ public class LoginServiceImpl implements LoginService {
 
         return Result.success("注销成功");
     }
+
+
 }

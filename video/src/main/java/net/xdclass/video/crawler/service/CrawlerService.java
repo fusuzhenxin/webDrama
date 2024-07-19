@@ -1,9 +1,6 @@
-package net.xdclass.crawler.service;
+package net.xdclass.video.crawler.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import net.xdclass.crawler.entity.Crawler;
 import net.xdclass.video.entity.Acquire;
-import net.xdclass.video.entity.Details;
 
 import java.util.List;
 

@@ -137,7 +137,7 @@ const  videoData=ref([]);
 const total=ref(0)
 const pageNum= ref(1);
 const pageSize= ref(10);
-
+const userName=localStorage.getItem('userName')
 //根据搜索框输入的名字来查询短剧
 // const search = async () => {
 //   try {
@@ -190,6 +190,10 @@ onMounted(() => {
 });
 const goToDramaDetail = (dramaId,name) => {
   request.post(`/news/click/${dramaId}`)
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
   console.log("---",dramaId);
   // Navigate to the detail page and pass drama ID as route parameter
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name} });

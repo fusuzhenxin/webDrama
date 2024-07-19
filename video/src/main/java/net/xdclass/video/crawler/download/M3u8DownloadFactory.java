@@ -1,19 +1,19 @@
-package net.xdclass.crawler.download;
+package net.xdclass.video.crawler.download;
 
 
 
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import net.sourceforge.pinyin4j.PinyinHelper;
-import net.xdclass.crawler.listener.DownloadListener;
-import net.xdclass.crawler.utils.Constant;
-import net.xdclass.crawler.utils.Log;
-import net.xdclass.crawler.utils.StringUtils;
+import net.xdclass.video.crawler.listener.DownloadListener;
+import net.xdclass.video.crawler.utils.Constant;
+import net.xdclass.video.crawler.utils.Log;
+import net.xdclass.video.crawler.utils.StringUtils;
 import net.xdclass.video.Exception.M3u8Exception;
 
 import net.xdclass.video.entity.FileOne;
 import net.xdclass.video.service.FileService;
-import net.xdclass.crawler.utils.MediaFormat;
+import net.xdclass.video.crawler.utils.MediaFormat;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;

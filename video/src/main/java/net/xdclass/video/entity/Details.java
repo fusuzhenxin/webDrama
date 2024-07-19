@@ -13,6 +13,7 @@ public class Details {
     @TableField("details_id")
     private Integer detailsId;
     private String name;
+    private String username;
     private String classify;
     private String description; //描述
     private String actors;
@@ -20,4 +21,5 @@ public class Details {
     private String collect;
     private String cover;
     private Double score;
+
 }

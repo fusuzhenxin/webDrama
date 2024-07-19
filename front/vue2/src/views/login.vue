@@ -12,29 +12,33 @@
           <p>{{ panelDescription }}</p>
           <form @submit.prevent="handleSubmit">
             <div class="input-group">
-              <label for="username">Username</label>
+              <label for="username">用户名</label>
               <input type="text" id="username" v-model="username" required>
             </div>
             <div class="input-group">
-              <label for="password">Password</label>
+              <label for="password">密码</label>
               <input type="password" id="password" v-model="password" required>
             </div>
             <div class="input-group" v-if="isRegistering">
-              <label for="confirmPassword">Confirm Password</label>
+              <label for="confirmPassword">再次输入密码</label>
               <input type="password" id="confirmPassword" v-model="confirmPassword" required>
             </div>
             <div class="input-group">
-            <label for="rememberMe">Remember Me</label>
-            <input type="checkbox" id="rememberMe" v-model="rememberMe">
+            <label for="rememberMe">记住我</label>
+          
           </div>
-            <a href="#" class="forgot-password">Forgot password?</a>
-            <button type="submit" class="submit-btn">{{ isRegistering ? 'Sign up' : 'Sign in' }}</button>
+          <div class="ewmemb">
+            <input type="checkbox" v-model="rememberMe">
+          </div>
+          
+            <a href="#" class="forgot-password">忘记密码？</a>
+            <button type="submit" class="submit-btn">{{ isRegistering ? '注册' : '登录' }}</button>
           </form>
           <div class="social-login">
           </div>
           <p class="switch-mode">
-            {{ isRegistering ? 'Already have an account?' : 'New Lovebird?' }}
-            <a href="#" @click.prevent="toggleMode">{{ isRegistering ? 'Sign in' : 'Create Account' }}</a>
+            {{ isRegistering ? '已有账户?' : '没有账号?' }}
+            <a href="#" @click.prevent="toggleMode">{{ isRegistering ? '登录' : '创建账户' }}</a>
           </p>
         </div>
       </div>
@@ -46,6 +50,7 @@
 import { ref, computed } from 'vue'
 import request from '@/utils/request';
 import router from '@/router/router';
+import { ElMessage } from 'element-plus';
 // import axios from 'axios';
 
   const isRegistering = ref(false)
@@ -54,13 +59,13 @@ import router from '@/router/router';
   const confirmPassword = ref('')
   const rememberMe = ref(false)
   const panelTitle = computed(() => 
-    isRegistering.value ? 'Join our community' : 'Welcome back'
+    isRegistering.value ? '注册账户' : '欢迎回来'
   )
   
   const panelDescription = computed(() => 
     isRegistering.value 
-      ? 'Create an account to start your journey with us.'
-      : 'Sign in to continue your experience with Lovebirds.'
+      ? ''
+      : '登录体验生活'
   )
   
   const toggleMode = () => {
@@ -87,13 +92,17 @@ import router from '@/router/router';
       userName: username.value, 
       password: password.value, 
     });
-    console.log('完整响应：', res);
+    
     if(res.data.code == 200){
-      console.log('当前用户是：', res.data.data.token);
     const token= res.data.data.token
+    const userName=res.data.data.userName
+    localStorage.setItem("userName",userName)
     localStorage.setItem("token",token)
     router.push('/')
-    console.log('完整响应：', res);
+    console.log('完整响应：', res.data.data.token);
+    }
+    if(res.data.code == 401){
+      ElMessage.error("账户或者密码错误，请重新输入")
     }
     
 
@@ -104,11 +113,20 @@ import router from '@/router/router';
   }
 };
 
-  const handleRegister = () => {
+  const handleRegister =async() => {
     // Registration logic here
     if (password.value !== confirmPassword.value) {
-      console.error('Passwords do not match!')
+      ElMessage.warning('两次输入的密码不一致')
       return
+    }
+    const res = await request.post('/user/register',{
+      userName:username.value,
+      password:password.value
+    });
+
+    if(res.data.code == 200){
+      ElMessage.success('注册成功')
+      router.push('/login')
     }
     console.log('Registering', username.value, password.value)
   }
@@ -182,6 +200,13 @@ import router from '@/router/router';
   
   .input-group {
     margin-bottom: 15px;
+  }
+  .input-groupOne {
+    margin-bottom: 5px;
+  }
+  .ewmemb{
+    margin-top: -35px;
+    margin-left: -212px;
   }
   
   label {

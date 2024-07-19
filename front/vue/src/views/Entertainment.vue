@@ -118,7 +118,7 @@
                 </div>
       <!-- 单独处理第一个元素 -->
       <div v-if="loadFindTop10Details.length > 0">
-        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].id)">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].detailsId)">
           <div style="display: flex; align-items: center;margin-bottom: 14px;">
             <i class="num">1</i>
             <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 95px; height: 140px;margin-top: -6px;">
@@ -129,7 +129,7 @@
       </div>
       <!-- 循环处理剩余元素 -->
       <div v-for="(drama, index) in loadFindTop10Details.slice(1)" :key="index">
-        <div class="drama-card2" @click="gotoloadFindTop10(drama.name,drama.id)">
+        <div class="drama-card2" @click="gotoloadFindTop10(drama.name,drama.detailsId)">
           <div style="display: flex; align-items: center;">
             <p style="color: #aaa; font-weight: 700; font-size: 20px; margin-left: 5px; margin-top: 8px;">{{ index + 2 }}</p>
             <span style="color: black; font-size: 20px; margin-left: 10px; margin-top: -4px; height: 40px;">{{ drama.name }}</span>
@@ -201,6 +201,7 @@ const loadFindTop10Details=ref([])
 const loadFindCollectTopDetails=ref([])
 import { useRouter } from 'vue-router';
 const router=useRouter()
+const userName=localStorage.getItem('userName')
 const total=ref(0)
 const pageNum= ref(1);
 const pageSize= ref(14);
@@ -208,6 +209,7 @@ const sort=ref('娱乐新闻')
 const loadFindTop10 =async()=>{
   const  res=await request.get('/news/top10')
   loadFindTop10Details.value=res.data.data
+  console.log("==============bfd======",loadFindTop10Details.value);
 }
 //正在播出
 const loadFindCollectTop10=async()=>{
@@ -274,10 +276,19 @@ const goToDramaDetail=async(dramaId,name)=>{
 //正在播出
 const gotoCollectTop=async(name,id)=>{
   request.post(`/news/click/${id}`)
+  request.post('/news/click/',{
+    id: id,
+    username: userName
+  })
   router.push({name:'VideoStory',params:{id: id,name: name,sort: sort.value,indicate: indicate.value}})
 }
 const gotoloadFindTop10=(name,id)=>{
   request.post(`/news/click/${id}`)
+  request.post('/news/click/',{
+    id: id,
+    username: userName
+  })
+  console.log("------------------",id);
   router.push({ name: 'VideoStory', params: { id: id ,name: name,sort: sort.value,indicate: indicate.value} });
 }
 onMounted(() => {

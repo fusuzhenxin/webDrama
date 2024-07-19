@@ -21,12 +21,12 @@
         order by details_id desc limit 12
     </select>
     <select id="selectLikes" resultType="net.xdclass.video.entity.Details">
-        select quantity
+        select *
         from details
         where name=#{name}
     </select>
     <select id="selectCollect" resultType="net.xdclass.video.entity.Details">
-        select collect
+        select *
         from details
         where name=#{name}
     </select>

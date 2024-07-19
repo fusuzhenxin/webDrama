@@ -1,5 +1,5 @@
 <template>
-  <div class="container" style="min-height: 100%; padding-bottom: 100px">
+  <div class="container" style=" padding-bottom: 100px">
     <div style="margin-bottom: 20px">
       <el-input
         style="width: 240px; margin-right: 20px"
@@ -108,7 +108,7 @@
         </el-form-item>
         <el-form-item prop="cover" label="封面图片">
           <el-upload
-            action="http://localhost:9090/file/cover"
+            action="http://localhost:9090/api/file/cover"
             ref="coverUpload"
             :data="getUploadData"
             :before-upload="beforeCoverUpload"
@@ -182,6 +182,7 @@ const truncateString = (str, maxLength) => {
 };
 
 const save = async () => {
+  console.log(form.value)
   const res = await request.post("/details/save", form.value);
   console.log(form.value)
   if (res.data.code === "200") {
@@ -206,7 +207,7 @@ const deleteOldImage = async () => {
     const cover =NewCover.value
     console.log(cover,"===");
     // 发送请求删除原有图片
-    await request.post('http://localhost:9090/file/coverOne', { params: { cover: cover } });
+    await request.post('/file/coverOne', { params: { cover: cover } });
     console.log("原有图片删除成功");
  
   } catch (error) {
@@ -215,6 +216,7 @@ const deleteOldImage = async () => {
 };
 const handleImgUploadSuccess = (response) => {
   form.value.cover = response;
+  console.log("img--",response);
 };
 
 const del = async (detailsId) => {
@@ -289,7 +291,7 @@ const handEdit = (row) => {
   form.value = { ...row };
   NewCover.value=form.value.cover
   NewName.value=form.value.name
-  console.log("====",form.value.cover);
+  console.log("====",form.value);
   dialogVisible.value = true;
 };
 </script>

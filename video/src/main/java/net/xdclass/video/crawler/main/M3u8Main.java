@@ -1,4 +1,4 @@
-package net.xdclass.crawler.main;//package net.xdclass.video.main;
+package net.xdclass.video.crawler.main;//package net.xdclass.video.main;
 //
 //
 //
@@ -112,9 +112,9 @@ package net.xdclass.crawler.main;//package net.xdclass.video.main;
 
 
 import cn.hutool.core.util.IdUtil;
-import net.xdclass.crawler.download.M3u8DownloadFactory;
-import net.xdclass.crawler.listener.DownloadListener;
-import net.xdclass.crawler.utils.Constant;
+import net.xdclass.video.crawler.download.M3u8DownloadFactory;
+import net.xdclass.video.crawler.listener.DownloadListener;
+import net.xdclass.video.crawler.utils.Constant;
 import net.xdclass.video.config.DownloadProgressManager;
 import net.xdclass.video.service.FileService;
 

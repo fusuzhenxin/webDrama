@@ -32,6 +32,7 @@ public class LoginUser implements UserDetails {
 
     public LoginUser(User xxuser,List<String> permissions){
         this.xxuser=xxuser;
+        //权限信息
         this.xxpermissions=permissions;
     }
 

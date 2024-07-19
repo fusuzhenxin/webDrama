@@ -1,5 +1,5 @@
 <template>
-  <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+  <div class="container" style=" padding-bottom: 100px;">
     <div style="margin-bottom: 20px">
       <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入用户名" v-model="username"></el-input>
       <el-button style="margin-left: 5px" type="primary" @click="loadAdminPage"><i class="el-icon-search"></i> 搜索</el-button>

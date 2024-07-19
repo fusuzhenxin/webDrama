@@ -6,11 +6,14 @@ import net.xdclass.video.common.Result;
 import net.xdclass.video.entity.Admin;
 import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.News;
+import net.xdclass.video.entity.Records;
 import net.xdclass.video.mapper.NewsMapper;
 import net.xdclass.video.service.NewsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
+@EnableScheduling
 public class NewsController {
     @Autowired
     private NewsService newsService;
@@ -38,7 +42,8 @@ public class NewsController {
     }
 
     //根据浏览量
-    @GetMapping("/news/browsePage")
+    @Scheduled(cron = "0 0 0 */1 * *")
+    @GetMapping("/apiOne/news/browsePage")
     public Result findBrowsePage(){
         Set<String> newsIds = stringRedisTemplate.opsForZSet().reverseRange("news:rank", 0, 9);
         if (newsIds == null || newsIds.isEmpty()){
@@ -80,7 +85,7 @@ public class NewsController {
     }
 
     //根据更新时间
-    @GetMapping("/news/updateTimePage")
+    @GetMapping("/apiOne/news/updateTimePage")
     public Result findUpdateTimePage(@RequestParam Integer pageNum,
                                  @RequestParam Integer pageSize){
         QueryWrapper<News> queryWrapper = new QueryWrapper<>();
@@ -89,7 +94,7 @@ public class NewsController {
         return Result.success(page);
     }
 
-    @GetMapping("/news/page")
+    @GetMapping("/apiOne/news/page")
     public Result findPage(@RequestParam Integer pageNum,
                            @RequestParam Integer pageSize){
         String newsKey="news:"+"pageNum:"+pageNum+"-"+"pageSize:"+pageSize;
@@ -108,7 +113,8 @@ public class NewsController {
     }
 
     //根据点赞数来排序热门视频
-    @GetMapping("/news/top10")
+    @Scheduled(cron = "0 0 0 */1 * *")
+    @GetMapping("/apiOne/news/top10")
     public Result findTop10(){
         //尝试从redis获取前十的id
         Set<String> top10NewsIds = stringRedisTemplate.opsForZSet().reverseRange("video:rank", 0, 9);
@@ -163,28 +169,30 @@ public class NewsController {
      * @param detailsId
      * @return
      */
-    //模拟新闻点击
-    @PostMapping("/news/click/{detailsId}")
+    //模拟视频点击
+    @PostMapping("/apiOne/news/click/{detailsId}")
     public Result clickVideo(@PathVariable Integer detailsId){
         newsService.incrementVideoScore(Long.valueOf(detailsId));
         return Result.success();
     }
 
+
+
     //模拟新闻点击
-    @PostMapping("/news/NewsClick/{id}")
+    @PostMapping("/apiOne/news/NewsClick/{id}")
     public Result clickNews(@PathVariable Integer id){
         newsService.incrementNewsScore(Long.valueOf(id));
         return Result.success();
     }
 
-    @GetMapping("/news/collectTop10")
+    @GetMapping("/apiOne/news/collectTop10")
     public Result findCollectTop10(){
         List<Details> top10News = newsMapper.findTop10ByCollect();
         return Result.success(top10News);
     }
 
     //根据新闻标题获取内容
-    @GetMapping("/news/finAll")
+    @GetMapping("/apiOne/news/finAll")
     public Result finAll(String name){
         QueryWrapper<News> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("name",name);

@@ -9,8 +9,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.SneakyThrows;
 import net.xdclass.video.common.Result;
+import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.FileOne;
 import net.xdclass.video.entity.Images;
+import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.FileMapper;
 import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.service.FileService;
@@ -33,6 +35,9 @@ public class FileController {
     private FileMapper fileMapper;
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private DetailsMapper detailsMapper;
 
     @Autowired
     ImagesMapper imagesMapper;
@@ -61,7 +66,7 @@ public class FileController {
             + "images" + java.io.File.separator;
 
     //单个视频上传
-    @PostMapping("/file/upload")
+    @PostMapping("/apiOne/file/upload")
     public  String upload(@RequestParam MultipartFile file,String name,String diversity) throws IOException{
         String originalFilename= file.getOriginalFilename();
         String type= FileUtil.extName(originalFilename);
@@ -115,13 +120,100 @@ public class FileController {
     }
 
     //批量上传视频
-    @PostMapping("/file/uploadList")
-    public List<String> uploads(@RequestParam("files") List<MultipartFile> files, String name) throws IOException {
+//    @PostMapping("/apiOne/file/uploadList")
+//    public List<String> uploads(@RequestParam("files") List<MultipartFile> files, String name) throws IOException {
+//
+//        List<String> urls = new ArrayList<>();
+//
+//        // 循环外保存封面图片，放循环外面就保存一次
+////        String coverUrl = saveCoverImage(cover);
+//
+//        for (int i = 0; i < files.size(); i++) {
+//            MultipartFile file = files.get(i);
+////            String diversity =String.valueOf(i+1);
+//            //原文件名
+//            String originalFilename = file.getOriginalFilename();
+//            String type = FileUtil.extName(originalFilename);
+//
+//            long size = file.getSize();
+//            //定义文件唯一的标识码
+//            String fileUUID = IdUtil.fastSimpleUUID() + StrUtil.DOT + type;
+//
+//            java.io.File uploadFile = new java.io.File(FILE_UPLOAD_PATH1 + fileUUID);
+//            java.io.File parentFile = uploadFile.getParentFile();
+//            if (!parentFile.exists()) {
+//                parentFile.mkdirs();
+//            }
+//
+//            String url;
+//            String md5 = SecureUtil.md5(file.getInputStream());
+//            //这是生成的MD5 不是数据库拿的
+//            FileOne dbFiles = getFileByMd5(md5);
+//            if (dbFiles != null) {
+//                //检查服务器上是否已经存在对应的文件。如果不存在，则将文件保存到服务器上，并设置 URL。
+//                url = dbFiles.getUrl();
+//                //检查服务器上是否存在特定文件的。它的逻辑是从一个完整的URL中提取文件名，然后检查服务器上指定路径下是否存在这个文件。
+//                boolean exist = FileUtil.exist(FILE_UPLOAD_PATH1 + url.substring(url.lastIndexOf("/") + 1));
+//                if (!exist) {
+//                    file.transferTo(uploadFile);
+//                    url = "http://localhost:9090/files/video/" + fileUUID;
+//                }
+//            } else {
+//                //上传到静态资源
+//                file.transferTo(uploadFile);
+//                url = "http://localhost:9090/files/video/" + fileUUID;
+//            }
+//
+//            int maxIndex=getMaxIndexForName(name);
+//            int diversity=maxIndex+1;
+//            FileOne saveFile = new FileOne();
+//            saveFile.setName(name);
+//            saveFile.setOriginalFilename(originalFilename);
+//            saveFile.setType(type);
+//            saveFile.setSize(size / 1024);
+//            saveFile.setUrl(url);
+//            saveFile.setMd5(md5);
+//            saveFile.setDiversity(String.valueOf(diversity));
+//            fileMapper.insert(saveFile);
+//            urls.add(url);
+//        }
+//
+//        return urls;
+//    }
+    @PostMapping("/apiOne/file/uploadList")
+    public List<String> uploads(@RequestParam("files") List<MultipartFile> files,
+                                @RequestParam("username") String username,
+                                @RequestParam("cover") MultipartFile cover,
+                                @RequestParam("title") String name,
+                                @RequestParam("description") String description,
+                                @RequestParam("type") String classify,
+                                @RequestParam("actors") String actors) throws IOException {
 
         List<String> urls = new ArrayList<>();
 
         // 循环外保存封面图片，放循环外面就保存一次
 //        String coverUrl = saveCoverImage(cover);
+
+        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("name",name);
+        Details details1 = detailsMapper.selectOne(queryWrapper);
+        if (details1==null){
+            Details details = new Details();
+            details.setName(name);
+            details.setClassify(classify);
+            details.setDescription(description);
+            details.setActors(actors);
+            String coverVideo = saveCoverImages(cover, name);
+            details.setCover(coverVideo);
+            details.setUsername(username);
+            detailsMapper.insert(details);
+        }
+
+
+
+        QueryWrapper<Details> queryWrapper1 = new QueryWrapper<>();
+        queryWrapper1.eq("name",name);
+        Details details2 = detailsMapper.selectOne(queryWrapper1);
 
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
@@ -158,10 +250,11 @@ public class FileController {
                 file.transferTo(uploadFile);
                 url = "http://localhost:9090/files/video/" + fileUUID;
             }
-
             int maxIndex=getMaxIndexForName(name);
             int diversity=maxIndex+1;
             FileOne saveFile = new FileOne();
+
+            saveFile.setDetailsId(details2.getDetailsId());
             saveFile.setName(name);
             saveFile.setOriginalFilename(originalFilename);
             saveFile.setType(type);
@@ -172,7 +265,6 @@ public class FileController {
             fileMapper.insert(saveFile);
             urls.add(url);
         }
-
         return urls;
     }
 
@@ -202,72 +294,6 @@ public class FileController {
     }
 
 
-    //点照片上传时候已经把url返回到前端了，然后发送编辑请求
-    @PostMapping("/file/cover")
-    private String saveCoverImages(@RequestParam MultipartFile file,String name) throws IOException{
-
-        String originalFilename= file.getOriginalFilename();
-        String type= FileUtil.extName(originalFilename);
-        String UUID=IdUtil.fastSimpleUUID()+StrUtil.DOT+type;
-        java.io.File uploadFile = new java.io.File(FILE_UPLOAD_PATH + UUID);
-
-        String md5 = SecureUtil.md5(file.getInputStream());
-        String url;
-        //这是生成的MD5 不是数据库拿的
-
-        FileOne dbFiles = getFileByMd5(md5);
-        if (dbFiles != null) {
-            //检查服务器上是否已经存在对应的文件。如果不存在，则将文件保存到服务器上，并设置 URL。
-            url = dbFiles.getUrl();
-            //检查服务器上是否存在特定文件的。它的逻辑是从一个完整的URL中提取文件名，然后检查服务器上指定路径下是否存在这个文件。
-            boolean exist = FileUtil.exist(FILE_UPLOAD_PATH + url.substring(url.lastIndexOf("/") + 1));
-            if (!exist) {
-                file.transferTo(uploadFile);
-                url = "http://localhost:9090/files/image/" + UUID;
-            }
-        } else {
-            //上传到静态资源
-            file.transferTo(uploadFile);
-            url = "http://localhost:9090/files/image/" + UUID;
-        }
-        long size = file.getSize();
-        Images images=new Images();
-        images.setCover(url);
-        images.setName(name);
-        images.setSize(size);
-        images.setType(type);
-        images.setOriginalFilename(originalFilename);
-        images.setMd5(md5);
-        imagesMapper.insert(images);
-        return url;
-    }
-
-    //删除原有图片
-    @PostMapping("/file/cover1")
-    private String saveCoverImages(@RequestBody JsonNode requestBody) throws IOException{
-        // 使用 Jackson ObjectMapper 将请求体解析为 JsonNode 对象
-        // 然后从 JsonNode 中提取 cover 参数的值
-
-        String cover = requestBody.get("params").get("cover").asText();
-        String fileName = cover.substring(cover.lastIndexOf("/") + 1);
-        String url=FILE_UPLOAD_PATH+fileName;
-        // 删除静态资源图片
-        boolean deleted = deleteImage(url);
-
-        if (deleted) {
-            try {
-                imagesMapper.deleteImagsUrl(cover);
-
-            }catch (Exception e) {
-                throw new ServerException("删除失败");
-            }
-            return "图片删除成功";
-        } else {
-            return "图片删除失败";
-        }
-
-    }
-
     //删除图片方法
     @SneakyThrows
     public static boolean deleteImage(String imageUrl) {
@@ -290,7 +316,7 @@ public class FileController {
         }
     }
     //第一集url和短剧的信息
-    @GetMapping("/file/Inception")
+    @GetMapping("/apiOne/file/Inception")
     public Result Inception(@RequestParam String name){
         FileOne filesList=fileMapper.selectName(name);
         return Result.success(filesList);
@@ -332,5 +358,73 @@ public class FileController {
         fileService.removeByIds(ids);
         return Result.success();
     }
+
+
+    //点照片上传时候已经把url返回到前端了，然后发送编辑请求
+    @PostMapping("/api/file/cover")
+    private String saveCoverImages(@RequestParam MultipartFile file,String name) throws IOException{
+
+        String originalFilename= file.getOriginalFilename();
+        String type= FileUtil.extName(originalFilename);
+        String UUID=IdUtil.fastSimpleUUID()+StrUtil.DOT+type;
+        java.io.File uploadFile = new java.io.File(FILE_UPLOAD_PATH + UUID);
+
+        String md5 = SecureUtil.md5(file.getInputStream());
+        String url;
+        //这是生成的MD5 不是数据库拿的
+
+        FileOne dbFiles = getFileByMd5(md5);
+        if (dbFiles != null) {
+            //检查服务器上是否已经存在对应的文件。如果不存在，则将文件保存到服务器上，并设置 URL。
+            url = dbFiles.getUrl();
+            //检查服务器上是否存在特定文件的。它的逻辑是从一个完整的URL中提取文件名，然后检查服务器上指定路径下是否存在这个文件。
+            boolean exist = FileUtil.exist(FILE_UPLOAD_PATH + url.substring(url.lastIndexOf("/") + 1));
+            if (!exist) {
+                file.transferTo(uploadFile);
+                url = "http://localhost:9090/files/image/" + UUID;
+            }
+        } else {
+            //上传到静态资源
+            file.transferTo(uploadFile);
+            url = "http://localhost:9090/files/image/" + UUID;
+        }
+        long size = file.getSize();
+        Images images=new Images();
+        images.setCover(url);
+        images.setName(name);
+        images.setSize(size);
+        images.setType(type);
+        images.setOriginalFilename(originalFilename);
+        images.setMd5(md5);
+        imagesMapper.insert(images);
+        return url;
+    }
+
+    //删除原有图片
+    @PostMapping("/api/file/coverOne")
+    private String saveCoverImages(@RequestBody JsonNode requestBody) throws IOException{
+        // 使用 Jackson ObjectMapper 将请求体解析为 JsonNode 对象
+        // 然后从 JsonNode 中提取 cover 参数的值
+
+        String cover = requestBody.get("params").get("cover").asText();
+        String fileName = cover.substring(cover.lastIndexOf("/") + 1);
+        String url=FILE_UPLOAD_PATH+fileName;
+        // 删除静态资源图片
+        boolean deleted = deleteImage(url);
+
+        if (deleted) {
+            try {
+                imagesMapper.deleteImagsUrl(cover);
+
+            }catch (Exception e) {
+                throw new ServerException("删除失败");
+            }
+            return "图片删除成功";
+        } else {
+            return "图片删除失败";
+        }
+
+    }
+
 
 }

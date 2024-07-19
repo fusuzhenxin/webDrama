@@ -14,6 +14,8 @@ public class Hellow {
 //    @PreAuthorize("hasAnyRole('zidingyi','huanf','system:dept:list')") //跟hasRole一样操作，只不过这个可以多参数
     //自定义权限校验方法，huanfHasAuthority
     @PreAuthorize("@huanfEX.huanfHasAuthority('system:dept:list')")
+    //把这个system:dept:list与JwtAuthenticationTokenFilter类里面的Authentication比较
+    //里面装有在数据库的权限信息，然后对比是否存在一致的
     public String hello(){
         return "老弟，你成功了";
     }

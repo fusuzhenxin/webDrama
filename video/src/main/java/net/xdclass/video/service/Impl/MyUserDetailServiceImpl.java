@@ -39,7 +39,9 @@ public class MyUserDetailServiceImpl implements UserDetailsService {
         User user = userMapper.selectOne(queryWrapper);
         //如果用户传进来的用户名，但是数据库没有这个用户名，就会导致我们是查不到的情况，那么就进行下面的判断。避免程序安全问题
         if(Objects.isNull(user)){//判断user对象是否为空。当在数据库没有查到数据时，user就会为空，也就会进入这个判断
+            System.out.println("33333");
             throw new RuntimeException("用户名或者密码错误");
+
         }
 
         //--------------------------------查询用户权限信息---------------------------------

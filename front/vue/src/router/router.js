@@ -25,12 +25,14 @@ const routes = [
         component: ()=> import("../views/VideoStory.vue")
 
     },
+    //个人中心
     {
         path: '/Counterattack',
         name: 'counterattack',
         component: ()=> import("../views/counterattack.vue")
 
     },
+
     {
         path: '/sweet',
         name: 'sweet',
@@ -55,6 +57,22 @@ const routes = [
         path:'/korean',
         name: 'korean',
         component: ()=>import("../views/korean.vue")
+    },
+    {
+        path: '/login',
+        component: ()=>import ("../views/login.vue")
+    },
+    {
+        path: '/sidebar',
+        component: ()=>import("../views/Sidebar.vue")
+    },
+    {
+        path: '/VideoUpload',
+        component: ()=>import("../views/VideoUpload.vue")
+    },
+    {
+        path: '/profile',
+        component: ()=>import("../views/profile.vue")
     },
 
 

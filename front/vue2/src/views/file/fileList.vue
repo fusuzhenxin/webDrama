@@ -1,5 +1,5 @@
 <template>
-  <div class="container" style="min-height: 100%; padding-bottom: 100px;">
+  <div class="container" style="padding-bottom: 100px;">
     <div style="margin-bottom: 20px">
       <el-input style="width: 240px;margin-right: 20px;" placeholder="请输入剧名" v-model="name"></el-input>
       <el-input style="width: 240px" placeholder="请输入分集" v-model="diversity"></el-input>

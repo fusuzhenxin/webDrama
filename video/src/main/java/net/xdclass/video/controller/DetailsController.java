@@ -15,6 +15,7 @@ import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.service.DetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +34,8 @@ public class DetailsController {
     private DetailsService detailsService;
     @Autowired
     private ImagesMapper imagesMapper;
-
+   private String CoverList;
+    private String MaterialList;
     private static final String FILE_UPLOAD_PATH = getProperty("user.dir")
             + File.separator
             + "src" + File.separator
@@ -43,9 +45,10 @@ public class DetailsController {
             + "files" + File.separator
             + "image" + File.separator;
     @Autowired
+
     private RedisTemplate redisTemplate;
 
-    @PostMapping("/save")
+    @PostMapping("/api/details/save")
     public Result save(@RequestBody Details details){
         detailsService.saveOrUpdate(details);
         return Result.success();
@@ -53,7 +56,7 @@ public class DetailsController {
 
 
     //上传图片
-    @PostMapping("/details/description")
+    @PostMapping("/api/details/description")
     public Result  details(@RequestParam("cover") MultipartFile cover ,String name, String classify, String description, String actors) throws IOException {
         String originalFilename = cover.getOriginalFilename();
         String type = FileUtil.extName(originalFilename);
@@ -105,7 +108,7 @@ public class DetailsController {
     }
 
     //通过剧名查找视频详情，详情页
-    @GetMapping("/details/finAll")
+    @GetMapping("/apiOne/details/finAll")
     public Result finAll(String name){
         String VideoKey="details:"+name;
         Object detailsOne =redisTemplate.opsForValue().get(VideoKey);
@@ -124,17 +127,25 @@ public class DetailsController {
 
     }
 
-    @GetMapping("/details/finAllName")
+    @GetMapping("/apiOne/details/finAllName")
     public Result finAllName(@RequestParam String name){
         List<Details> detailsList=detailsService.finAllName(name);
         return Result.success(detailsList);
     }
 
 
+    @Scheduled(cron = "0 15 10 ? * 6L")
+    public  void Scheduled(){
+
+      redisTemplate.delete(CoverList);
+      redisTemplate.delete(MaterialList);
+        System.out.println("清除缓存更新数据-线程1");
+    }
+
     //主页的推荐视频和详情页娱乐新闻的热门视频
-    @GetMapping("/details/selectTop10")
+    @GetMapping("/apiOne/details/selectTop10")
     public Result selectTop10(@RequestParam String classify){
-        String CoverList="coverList:"+classify;
+        CoverList="coverList:"+classify;
         Object List = redisTemplate.opsForValue().get(CoverList);
         if (List == null){
             QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
@@ -151,8 +162,26 @@ public class DetailsController {
 //        return Result.success(details);
     }
 
+    //个人素材
+    @GetMapping("/apiOne/details/personalMaterial")
+    public Result personalMaterial(@RequestParam String username){
+
+        MaterialList="personalMaterial:"+username;
+        Object List = redisTemplate.opsForValue().get(MaterialList);
+        if (List == null){
+            QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
+            queryWrapper.eq("username", username);
+            List<Details> details= detailsMapper.selectList(queryWrapper);
+            if (details!=null){
+                redisTemplate.opsForValue().set(MaterialList,details);
+                return Result.success(details);
+            }
+        }
+        return Result.success(List);
+    }
+
     //首页的大视频
-    @GetMapping("/details/selectTopSix")
+    @GetMapping("/apiOne/details/selectTopSix")
     public Result selectTopSix(@RequestParam String classify){
         String selectTopSix="selectTopSix:"+classify;
         Object selectTopList = redisTemplate.opsForValue().get(selectTopSix);
@@ -170,39 +199,39 @@ public class DetailsController {
     }
 
     //搜索页面默认的剧
-    @GetMapping("/details/selectAcquiesce")
+    @GetMapping("/apiOne/details/selectAcquiesce")
     public Result selectAcquiesce(@RequestParam String classify){
         List<Details> details= detailsMapper.selectAcquiesce(classify);
         return Result.success(details);
 
     }
     //点赞增加
-    @GetMapping("/details/likes")
+    @GetMapping("/apiOne/details/likes")
     public Result likes(@RequestParam String name){
         Details details = detailsService.selectLikes(name);
         return Result.success(details.getQuantity());
     }
 
     //点赞删除
-    @GetMapping("/details/likesDelete")
+    @GetMapping("/apiOne/details/likesDelete")
     public Result collectDelete(@RequestParam String name){
         return Result.success(detailsService.selectlikesDelete(name).getQuantity());
     }
 
     //收藏增加
-    @GetMapping("/details/collect")
+    @GetMapping("/apiOne/details/collect")
     public Result Collect(@RequestParam String name){
         return Result.success(detailsService.selectCollect(name).getCollect());
     }
 
     //收藏取消
-    @GetMapping("/details/collectDelete")
+    @GetMapping("/apiOne/details/collectDelete")
     public Result CollectDelete(@RequestParam String name){
         return Result.success(detailsService.selectCollectDelete(name).getCollect());
     }
 
     //分页组件，搜索短剧
-    @GetMapping("/details/page")
+    @GetMapping("/apiOne/details/page")
     public Result findPage(@RequestParam(defaultValue = "") String name,
                            @RequestParam Integer pageNum,
                            @RequestParam Integer pageSize){

@@ -53,6 +53,7 @@ import request from "@/utils/request";
 import { useRouter } from "vue-router";
 import "@fortawesome/fontawesome-free/css/all.css"; // 在 JavaScript 文件中引入
 
+const userName=localStorage.getItem('userName')
 const sort = ref("时空之旅");
 const indicate = ref("/traversing");
 // Reactive data for short dramas
@@ -80,6 +81,10 @@ const router = useRouter();
 // Method to navigate to drama detail page
 const goToDramaDetail = (dramaId, name) => {
   request.post(`/news/click/${dramaId}`);
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
   console.log("---", dramaId);
   // Navigate to the detail page and pass drama ID as route parameter
   router.push({

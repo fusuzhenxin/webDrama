@@ -42,6 +42,7 @@
   import '@fortawesome/fontawesome-free/css/all.css'; // 在 JavaScript 文件中引入
   
   const sort=ref('逆袭')
+  const userName=localStorage.getItem('userName')
   const indicate=ref('/counterattack')
   // Reactive data for short dramas
   const shortDramas = ref([]);
@@ -65,11 +66,18 @@
   
   // Method to navigate to drama detail page
   const goToDramaDetail = (dramaId,name) => {
+     //模拟视频点击
     request.post(`/news/click/${dramaId}`)
+    request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
+
     console.log("---",dramaId);
     // Navigate to the detail page and pass drama ID as route parameter
     // router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
     router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate: indicate.value} });
+    
   };
   
   </script>

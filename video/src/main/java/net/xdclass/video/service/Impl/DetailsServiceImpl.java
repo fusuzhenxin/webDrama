@@ -8,6 +8,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -23,7 +25,20 @@ import static java.lang.System.out;
 @Service
 public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  implements DetailsService{
 
+    @Autowired
+    private RedisTemplate redisTemplate;
 
+    public void updateLike(String name,Details details1){
+        String videoKey = "details:" + name;
+        redisTemplate.delete(videoKey);
+        redisTemplate.opsForValue().set(videoKey, details1);
+    }
+
+    /**
+     * 有待优化，下面的删除还没弄好
+     * @param name
+     * @return
+     */
     @Override
     public Details selectLikes(String name) {
         out.println("你好");
@@ -33,7 +48,7 @@ public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  im
         String quantityStr = String.valueOf(quantity);
         this.baseMapper.updateQuantityStr(quantityStr,name);
         Details details1 = this.baseMapper.selectLikes(name);
-
+        updateLike(name,details1);
         return details1;
     }
 
@@ -45,6 +60,7 @@ public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  im
         String quantityStr = String.valueOf(quantity);
         this.baseMapper.updateQuantityStr(quantityStr,name);
         Details details1 = this.baseMapper.selectLikes(name);
+        updateLike(name,details1);
         return details1;
     }
 
@@ -72,6 +88,7 @@ public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  im
         String collectStr = String.valueOf(collect);
         this.baseMapper.updateCollect(collectStr,name);
         Details details1=this.baseMapper.selectCollect(name);
+        updateLike(name,details1);
         return details1;
     }
     @Override
@@ -82,6 +99,7 @@ public class DetailsServiceImpl extends ServiceImpl<DetailsMapper , Details>  im
         String collectStr = String.valueOf(collect);
         this.baseMapper.updateCollect(collectStr,name);
         Details details1 = this.baseMapper.selectCollect(name);
+        updateLike(name,details1);
         return details1;
     }
 

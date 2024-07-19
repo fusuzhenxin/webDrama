@@ -244,6 +244,7 @@ import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 const route=useRoute()
 const router=useRouter()
+const userName=localStorage.getItem('userName')
 const pageNum= ref(1);
 const pageSize= ref(10);
 const browseDetails=ref([])
@@ -333,11 +334,19 @@ onMounted(() => {
 });
 const goToDramaDetail=async(dramaId,name)=>{
   request.post(`/news/click/${dramaId}`)
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 //正在播出
 const gotoCollectTop=async(name,id)=>{
   request.post(`/news/click/${id}`)
+  request.post('/news/click/',{
+    id: id,
+    username: userName
+  })
   router.push({name:'VideoStory',params:{id: id,name: name,sort: sort.value,indicate: indicate.value}})
 }
 const goToNewsDetail=async(dramaId,name)=>{
@@ -347,6 +356,10 @@ router.push({ name: 'NewsDetails', params: { id: dramaId ,name: name,sort: sort.
 //热门视频
 const gotoloadFindTop10=(name,id)=>{
   request.post(`/news/click/${id}`)
+  request.post('/news/click/',{
+    id: id,
+    username: userName
+  })
   router.push({ name: 'VideoStory', params: { id: id ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 const fetchData = async () => {

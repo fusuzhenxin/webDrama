@@ -1,16 +1,16 @@
 <template>
 
-  <el-menu
+<el-menu
     :default-active="$route.path" router
     class="el-menu-demo"
-    mode="horizontal"
-    
+    mode="vertical"
     background-color="#545c64"
     text-color="#fff"
     active-text-color="#ffd04b"
-    style="height: 70px;margin-top: -10px;border-radius: 5px;"
+    style="height: 100vh; width: 200px; border-radius: 0;"
     @select="handleSelect"
   >
+  <img class="main-img" src="@/assets/logo_transparent.png"  />
     <el-menu-item index="/HelloWorld">  
       <i class="el-icon-eleme"></i>
       <span>首页</span>
@@ -56,30 +56,13 @@
 
         <el-menu-item index="/crawlerList">视频详情列表</el-menu-item>
       </el-sub-menu>
-      <el-avatar style="margin-left:750px"
-        src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-      />
-      <el-dropdown style="width: 10px">
-        <span style="margin-top: 15px; justify-content: flex-end;height: 10PX;">
-      <span style="color: white">DDD</span>
-      <el-icon class="el-icon--right">
-        <arrow-down />
-      </el-icon>
-    </span>
-    <template #dropdown>
-      <el-dropdown-menu>
-        <el-dropdown-item>登出</el-dropdown-item>
-        <el-dropdown-item>我的信息</el-dropdown-item>
-        <el-dropdown-item>Action 3</el-dropdown-item>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
+
   </el-menu>
 
 </template>
 
 <script setup>
-import { ArrowDown } from '@element-plus/icons-vue'
+
 const handleSelect = () => {
 
 }
@@ -99,5 +82,17 @@ margin-left: 100px;
 }
 .example-showcase .el-dropdown-link {
  color: black;
+}
+.el-menu-demo {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+}
+.main-img{
+ width: 200px; 
+ height: 200px;
+ margin-top: 0px;
+ margin-bottom: -20px
 }
 </style>

@@ -1,4 +1,4 @@
-package net.xdclass.crawler.entity;
+package net.xdclass.video.crawler.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;

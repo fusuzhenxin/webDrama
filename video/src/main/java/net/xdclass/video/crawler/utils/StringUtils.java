@@ -1,4 +1,4 @@
-package net.xdclass.crawler.utils;
+package net.xdclass.video.crawler.utils;
 
 import java.math.BigDecimal;
 

@@ -10,4 +10,6 @@ public interface LoginService {
     //-----------------------------------退出登录--------------------------------
 
     Result yylogout();
+
+
 }

@@ -3,7 +3,7 @@ package net.xdclass.video.service.Impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
 import net.xdclass.video.entity.*;
-import net.xdclass.crawler.listener.DownloadListener;
+import net.xdclass.video.crawler.listener.DownloadListener;
 import net.xdclass.video.mapper.*;
 import net.xdclass.video.service.FileService;
 import net.xdclass.video.service.VideoService;

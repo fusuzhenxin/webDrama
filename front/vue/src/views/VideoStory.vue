@@ -297,6 +297,7 @@ import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 const route=useRoute()
 const router=useRouter()
+const userName=localStorage.getItem('userName')
 const initVideoName = () => {
   if (route.params.name) {
     videoName.value = route.params.name;
@@ -369,17 +370,29 @@ const goToEpisode=async(episode)=>{
 //热门视频
 const gotoloadFindTop10=(name,dramaId)=>{
   request.post(`/news/click/${dramaId}`)
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
   console.log("idid ",dramaId);
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 const goToDramaDetail=async(dramaId,name)=>{
   request.post(`/news/click/${dramaId}`)
+  request.post('/news/click/',{
+    id: dramaId,
+    username: userName
+  })
   console.log("---",dramaId);
   router.push({ name: 'VideoStory', params: { id: dramaId ,name: name,sort: sort.value,indicate:indicate.value}});
 }
 //正在播出
 const gotoCollectTop=async(name,id)=>{
   request.post(`/news/click/${id}`)
+  request.post('/news/click/',{
+    id: id,
+    username: userName
+  })
   router.push({name:'VideoStory',params:{id: id,name: name,sort: sort.value,indicate: indicate.value}})
 }
 const goToNewsDetails=async(dramaId,name)=>{

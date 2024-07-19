@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import net.xdclass.video.entity.Details;
 import net.xdclass.video.entity.Images;
 import net.xdclass.video.entity.News;
+import net.xdclass.video.mapper.DetailsMapper;
 import net.xdclass.video.mapper.ImagesMapper;
 import net.xdclass.video.mapper.NewsMapper;
 import net.xdclass.video.service.ImagesService;
@@ -48,6 +49,8 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
     private NewsMapper newsMapper;
     @Autowired
     private ImagesMapper imagesMapper;
+    @Autowired
+    private DetailsMapper detailsMapper;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -248,10 +251,17 @@ public class NewsServiceImpl  extends ServiceImpl<NewsMapper, News> implements N
         }
     }
 
-    //更新点击数量
+    //更新视频点击数量
     @Override
     public void incrementVideoScore(Long detailsId) {
         stringRedisTemplate.opsForZSet().incrementScore("video:rank",String.valueOf(detailsId),1);
+//        QueryWrapper<Details> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq("details_id",detailsId);
+//        Details details = detailsMapper.selectOne(queryWrapper);
+//        String name = details.getName();
+//        String cover = details.getCover();
+
+
     }
 
     //更新新闻点击数量

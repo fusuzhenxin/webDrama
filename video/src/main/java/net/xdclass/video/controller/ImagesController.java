@@ -42,7 +42,7 @@ public class ImagesController {
 
 
 
-    @PostMapping("/images/description")
+    @PostMapping("/apiOne/images/description")
     public Result details(@RequestParam("cover") MultipartFile cover , String name, String classify, String description, String actors) throws IOException {
         String originalFilename = cover.getOriginalFilename();
         String type = FileUtil.extName(originalFilename);
