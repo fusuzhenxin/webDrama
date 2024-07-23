@@ -114,7 +114,8 @@ const logout = async () => {
     // 配置对象包含请求头，使用动态获取的 Token
     const config = {
       headers: {
-        'Authorization': `Bearer ${token}`, // 使用从 localStorage 获取的 Token
+        
+        'token': `${token}`, // 使用从 localStorage 获取的 Token
         'Content-Type': 'application/json'
       }
     };

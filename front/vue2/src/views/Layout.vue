@@ -13,6 +13,7 @@
       <el-dropdown-menu>
       <el-dropdown-item @click="logout">登出</el-dropdown-item>
       <el-dropdown-item @click="personal">我的信息</el-dropdown-item>
+      <el-dropdown-item @click="password">修改密码</el-dropdown-item>
     </el-dropdown-menu>
   </template>
 </el-dropdown>
@@ -40,11 +41,16 @@ const logout = async() => {
   // 清除本地存储
   localStorage.removeItem('token')
   localStorage.removeItem('userName')
+  localStorage.removeItem('menus')
+  localStorage.removeItem('userType')
   // 重定向到登录页面
   router.push('/login')
 }
 const personal = () =>{
   router.push('/personal')
+}
+const password = () =>{
+  router.push('/password')
 }
 onMounted(() => {
   if (dropdownContainer.value) {

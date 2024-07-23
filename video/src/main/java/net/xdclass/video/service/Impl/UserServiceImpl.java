@@ -1,9 +1,12 @@
 package net.xdclass.video.service.Impl;
 
+import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.SneakyThrows;
+import net.xdclass.video.Exception.ServiceException;
 import net.xdclass.video.common.Result;
+import net.xdclass.video.controller.dto.UserPasswordDTO;
 import net.xdclass.video.entity.News;
 import net.xdclass.video.entity.User;
 import net.xdclass.video.mapper.NewsMapper;
@@ -13,6 +16,7 @@ import net.xdclass.video.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.rmi.ServerException;
 
@@ -33,9 +37,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new ServerException("用户已存在");
         }
         String encodePassword = passwordEncoder.encode(user.getPassword());
+        user.setNickName(userName);
         user.setUserName(userName);
         user.setPassword(encodePassword);
-        user.setUserType("0");
+        user.setUserType("ROLE_ADMIN");
         userMapper.insert(user);
     }
 
@@ -50,10 +55,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return Result.error(String.valueOf(401),"用户已存在");
         }
         String encodePassword = passwordEncoder.encode(user.getPassword());
+        user.setNickName(userName);
         user.setUserName(userName);
         user.setPassword(encodePassword);
-        user.setUserType("1");
+        user.setUserType("ROLE_USER");
         userMapper.insert(user);
         return Result.success();
+    }
+
+    @Override
+    public void updatePassword(UserPasswordDTO userPasswordDTO) {
+        //先把密码加密
+        System.out.println(userPasswordDTO);
+        userPasswordDTO.setNewPassword(passwordEncoder.encode(userPasswordDTO.getNewPassword()));
+        String password=userMapper.getUsernamePassword(userPasswordDTO.getUsername());
+        System.out.println("====="+password);
+        boolean isPasswordMatch  = BCrypt.checkpw(userPasswordDTO.getPassword(), password);
+        if (isPasswordMatch){
+            int update = userMapper.updatePassword(userPasswordDTO);
+            if (update < 1) {
+                throw new ServiceException("密码错误");
+            }
+        }
+
     }
 }

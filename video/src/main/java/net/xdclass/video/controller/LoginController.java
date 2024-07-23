@@ -2,6 +2,7 @@ package net.xdclass.video.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import net.xdclass.video.common.Result;
+import net.xdclass.video.controller.dto.UserDTO;
 import net.xdclass.video.entity.Admin;
 import net.xdclass.video.entity.User;
 import net.xdclass.video.mapper.UserMapper;
@@ -22,9 +23,9 @@ public class LoginController {
 
     @PostMapping("/api/user/login")
     //ResponseResult和user是我们在domain目录写好的类
-    public Result xxlogin(@RequestBody User user){
+    public Result xxlogin(@RequestBody UserDTO userDTO){
         //登录
-        return loginService.login(user);
+        return loginService.login(userDTO);
 
     }
 

@@ -92,14 +92,19 @@ import { ElMessage } from 'element-plus';
       userName: username.value, 
       password: password.value, 
     });
-    
+    console.log('xxx', res.data.data);
     if(res.data.code == 200){
     const token= res.data.data.token
+    const menus=res.data.data.menus
+    const userType=res.data.data.userType
+    console.log('menus',res.data.data.menus);
     const userName=res.data.data.userName
     localStorage.setItem("userName",userName)
+    localStorage.setItem("menus", JSON.stringify(menus));
     localStorage.setItem("token",token)
+    localStorage.setItem("userType",userType)
     router.push('/')
-    console.log('完整响应：', res.data.data.token);
+  
     }
     if(res.data.code == 401){
       ElMessage.error("账户或者密码错误，请重新输入")

@@ -65,7 +65,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/crawler/page").permitAll()
 //                        .requestMatchers(HttpMethod.POST,"/apiOne/user/userRegister").permitAll()
                         .requestMatchers("/api/file/cover").permitAll()
-//                        .requestMatchers("/api/user/logout").permitAll()
+                        .requestMatchers("/api/user/export").permitAll()
                         .requestMatchers("/apiOne/file/uploadList").permitAll()
                         .requestMatchers("/files/image/**").permitAll()
                         .requestMatchers("/files/images/**").permitAll()

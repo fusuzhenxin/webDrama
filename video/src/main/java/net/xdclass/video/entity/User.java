@@ -1,11 +1,17 @@
 package net.xdclass.video.entity;
 
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -18,14 +24,15 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("sys_user")
-public class User implements Serializable {
-    private static final long serialVersionUID = -40356785423868312L;
+public class User{
+//    private static final long serialVersionUID = -40356785423868312L;
 
     /**
      * 主键
      */
-    @TableId
-    private Long id;
+    @TableId(type = IdType.AUTO)
+    @TableField("id")
+    private Integer id;
     /**
      * 用户名
      */
@@ -82,5 +89,7 @@ public class User implements Serializable {
      * 删除标志（0代表未删除，1代表已删除）
      */
     private Integer delFlag;
+
+    private String address;
 
 }

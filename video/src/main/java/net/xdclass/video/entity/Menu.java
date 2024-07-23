@@ -1,5 +1,6 @@
 package net.xdclass.video.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author 35238
@@ -46,6 +48,11 @@ public class Menu implements Serializable {
      */
     private String status;
     /**
+     * 父级id
+     */
+
+    private Long pid;
+    /**
      * 权限标识
      */
     private String perms;
@@ -68,5 +75,9 @@ public class Menu implements Serializable {
     /**
      * 备注
      */
+
+    @TableField(exist = false)
+    private List<Menu> children;
     private String remark;
+    private Integer sortNum;
 }

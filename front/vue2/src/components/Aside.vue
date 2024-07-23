@@ -1,7 +1,8 @@
 <template>
-
-<el-menu
-    :default-active="$route.path" router
+  <el-menu
+    :default-active="$route.path"
+    router
+    :default-openeds="opens"
     class="el-menu-demo"
     mode="vertical"
     background-color="#545c64"
@@ -10,89 +11,82 @@
     style="height: 100vh; width: 200px; border-radius: 0;"
     @select="handleSelect"
   >
-  <img class="main-img" src="@/assets/logo_transparent.png"  />
-    <el-menu-item index="/HelloWorld">  
-      <i class="el-icon-eleme"></i>
-      <span>首页</span>
-    </el-menu-item>
-
-    <el-sub-menu index="file">
-      <template #title>
-        <i class="el-icon-question"></i>
-        <span>视频文件管理</span>
+    <img class="main-img" src="@/assets/logo_transparent.png" />
+    <div v-for="item in menus" :key="item.id">
+      <template v-if="item.path">
+        <el-menu-item :index="item.path">
+          <template #title>
+            <i :class="item.icon"></i>
+            <span>{{ item.menuName }}</span>
+          </template>
+        </el-menu-item>
       </template>
-       <el-menu-item index="/fileList">文件列表</el-menu-item>
-    </el-sub-menu>
-
-    <el-sub-menu index="details">
-        <template #title>
-          <i class="el-icon-user"></i>
-          <span>视频详情管理</span>
-        </template>
-
-        <el-menu-item index="/detailsList">视频详情列表</el-menu-item>
-    </el-sub-menu>
-      <el-sub-menu index="admin">
-        <template #title>
-          <i class="el-icon-user"></i>
-          <span>管理员管理</span>
-        </template>
-        <el-menu-item index="/adminList">管理员列表</el-menu-item>
-      </el-sub-menu>
-
-      <el-sub-menu index="news">
-        <template #title>
-          <i class="el-icon-user"></i>
-          <span>娱乐新闻管理</span>
-        </template>
-        <el-menu-item index="/newsList">娱乐新闻列表</el-menu-item>
-      </el-sub-menu>
-
-      <el-sub-menu index="crawler">
-        <template #title>
-          <i class="el-icon-user"></i>
-          <span>视频图片爬取管理</span>
-        </template>
-
-        <el-menu-item index="/crawlerList">视频详情列表</el-menu-item>
-      </el-sub-menu>
-
+      <template v-else>
+        <el-sub-menu :index="item.id + ''">
+          <template #title>
+            <i :class="item.icon"></i>
+            <span>{{ item.menuName }}</span>
+          </template>
+          <el-menu-item
+            v-for="subItem in item.children"
+            :key="subItem.id"
+            :index="subItem.path"
+          >
+            <template #title>
+              <span>{{ subItem.menuName }}</span>
+            </template>
+          </el-menu-item>
+        </el-sub-menu>
+      </template>
+    </div>
   </el-menu>
-
 </template>
 
 <script setup>
+import { ref, computed } from 'vue';
 
-const handleSelect = () => {
+// 从 localStorage 获取菜单数据
+const menus = ref(JSON.parse(localStorage.getItem("menus")) || []);
 
-}
+// 计算默认打开的菜单项索引
+const opens = computed(() => {
+  return menus.value.filter(item => !item.path).map(item => item.id + '');
+});
+
+const handleSelect = (index) => {
+  // 处理菜单项选择的逻辑
+  console.log("Selected:", index);
+};
 </script>
 
 <style scoped>
-.demo-type {
-margin-left: 100px;
-}
-.demo-type > div {
-  flex: 1;
-  text-align: center;
-}
-
-.demo-type > div:not(:last-child) {
-  border-right: 1px solid var(--el-border-color);
-}
-.example-showcase .el-dropdown-link {
- color: black;
-}
 .el-menu-demo {
   position: fixed;
   top: 0;
   left: 0;
-
 }
-.main-img{
- width: 200px; 
- height: 200px;
- margin-top: 0px;
- margin-bottom: -20px
+
+.main-img {
+  width: 200px; 
+  height: 200px;
+  margin-top: 0;
+  margin-bottom: -20px;
+}
+
+/* 确保菜单项字体颜色正常显示 */
+.el-menu-item,
+.el-submenu {
+  color: #fff; /* 确保菜单项和子菜单字体颜色为白色 */
+}
+
+.el-menu-item:hover,
+.el-menu-item.is-active {
+  color: #ffd04b; /* 设置选中和悬停时的字体颜色 */
+}
+
+/* 确保图标显示正确 */
+.el-menu-item i,
+.el-submenu i {
+  margin-right: 10px; /* 图标与文本之间的间隔 */
 }
 </style>

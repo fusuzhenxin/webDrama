@@ -32,16 +32,17 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         //获取token，指定你要获取的请求头叫什么
         String token=null;
-//        String xxtoken = request.getHeader("token");
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            token=bearerToken.substring(7);
+        String xxtoken = request.getHeader("token");
 
-        }
+//        String bearerToken = request.getHeader("Authorization");
+//        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+//            token=bearerToken.substring(7);
+//
+//        }
 
         //判空，不一定所有的请求都有请求头，所以上面那行的xxtoken可能为空
         //!StringUtils.hasText()方法用于检查给定的字符串是否为空或仅包含空格字符
-        if (!StringUtils.hasText(token)) {
+        if (!StringUtils.hasText(xxtoken)) {
             //如果请求没有携带token，那么就不需要解析token，不需要获取用户信息，直接放行就可以
             filterChain.doFilter(request, response);
             //return之后，就不会走下面那些代码
@@ -50,7 +51,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         //解析token
         String userid; //把userid定义在外面，才能同时用于下面的46行和52行
         try {
-            Claims claims = JwtUtil.parseJWT(token);
+            Claims claims = JwtUtil.parseJWT(xxtoken);
             userid = claims.getSubject();
         } catch (Exception e) {
             e.printStackTrace();

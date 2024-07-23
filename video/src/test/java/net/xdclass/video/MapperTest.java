@@ -61,11 +61,6 @@ public class MapperTest {
     @Autowired
     private MenuMapper menuMapper;
 
-    @Test
-    public void testSelectPermsByUserId(){
-        //L表示Long类型
-        List<String> list = menuMapper.selectPermsByUserId(2L);
-        System.out.println(list);
-    }
+
 
 }
