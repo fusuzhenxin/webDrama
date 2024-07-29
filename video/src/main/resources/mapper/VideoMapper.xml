@@ -11,8 +11,8 @@
         from file
         where name=#{name}
     </select>
-    <select id="seleteEpisodeUrl" resultType="java.lang.String">
-        select url
+    <select id="seleteEpisodeUrl" resultType="net.xdclass.video.entity.FileOne">
+        select *
         from file
         where name=#{videoName} AND diversity=#{episodeNumber}
     </select>

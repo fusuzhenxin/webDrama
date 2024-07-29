@@ -91,7 +91,7 @@ const submitForm = async () => {
         'Content-Type': 'multipart/form-data'
       }
     });
-    console.log('上传成功:', response.data);
+    console.log('上传成功:', response);
   } catch (error) {
     console.error('上传失败:', error);
   }

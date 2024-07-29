@@ -9,8 +9,10 @@ import net.xdclass.video.common.Result;
 import net.xdclass.video.controller.dto.UserPasswordDTO;
 import net.xdclass.video.entity.News;
 import net.xdclass.video.entity.User;
+import net.xdclass.video.entity.UserRole;
 import net.xdclass.video.mapper.NewsMapper;
 import net.xdclass.video.mapper.UserMapper;
+import net.xdclass.video.mapper.UserRoleMapper;
 import net.xdclass.video.service.NewsService;
 import net.xdclass.video.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserMapper userMapper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRoleMapper userRoleMapper;
     @SneakyThrows
     @Override
     public void register(User user) {
@@ -37,11 +41,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new ServerException("用户已存在");
         }
         String encodePassword = passwordEncoder.encode(user.getPassword());
+        UserRole userRole = new UserRole();
+
         user.setNickName(userName);
         user.setUserName(userName);
         user.setPassword(encodePassword);
         user.setUserType("ROLE_ADMIN");
         userMapper.insert(user);
+        String usernameId = userMapper.getUsernameId(userName);
+        userRole.setRoleId(1L);
+        userRole.setUserId(Long.valueOf(usernameId));
+        userRoleMapper.insert(userRole);
     }
 
     @SneakyThrows

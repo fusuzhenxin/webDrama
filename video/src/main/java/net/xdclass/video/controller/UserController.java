@@ -22,8 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
@@ -160,6 +159,7 @@ public class UserController {
     @GetMapping("/api/user/export")
     public void export(HttpServletResponse response) throws Exception {
         // 从数据库查询出所有的数据
+        Date createTime=null;
         List<User> list = userService.list();
         // 通过工具类创建writer 写出到磁盘路径
 //        ExcelWriter writer = ExcelUtil.getWriter(filesUploadPath + "/用户信息.xlsx");
@@ -188,6 +188,42 @@ public class UserController {
         out.close();
         writer.close();
 
+    }
+
+    //导出部分字段
+    @GetMapping("/api/user/exports")
+    public void exports(HttpServletResponse response) throws Exception {
+        // 从数据库查询出所有的数据
+        List<User> list = userService.list();
+
+        // 筛选并映射需要导出的字段
+        List<Map<String, Object>> exportData = new ArrayList<>();
+        for (User user : list) {
+            Map<String, Object> userData = new LinkedHashMap<>();
+            userData.put("用户名", user.getUserName());
+            userData.put("昵称", user.getNickName());
+            userData.put("邮箱", user.getEmail());
+            // 添加其他需要导出的字段...
+
+            exportData.add(userData);
+        }
+
+        // 在内存操作，写出到浏览器
+        ExcelWriter writer = ExcelUtil.getWriter(true);
+        // 设置标题别名，这里不需要再设置 User 对象的字段别名了
+
+        // 一次性写出映射后的数据到excel，使用默认样式，强制输出标题
+        writer.write(exportData, true);
+
+        // 设置浏览器响应的格式
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=utf-8");
+        String fileName = URLEncoder.encode("用户信息", "UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
+
+        ServletOutputStream out = response.getOutputStream();
+        writer.flush(out, true);
+        out.close();
+        writer.close();
     }
 
     /**

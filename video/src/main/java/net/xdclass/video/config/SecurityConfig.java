@@ -24,6 +24,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+                .formLogin().and()
+                .httpBasic();
+    }
+
     //PasswordEncoder 用于编码和验证密码，这里使用的是 BCryptPasswordEncoder。
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -65,7 +74,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/crawler/page").permitAll()
 //                        .requestMatchers(HttpMethod.POST,"/apiOne/user/userRegister").permitAll()
                         .requestMatchers("/api/file/cover").permitAll()
+                        .requestMatchers("/play").permitAll()
                         .requestMatchers("/api/user/export").permitAll()
+                        .requestMatchers("/api/user/exports").permitAll()
                         .requestMatchers("/apiOne/file/uploadList").permitAll()
                         .requestMatchers("/files/image/**").permitAll()
                         .requestMatchers("/files/images/**").permitAll()

@@ -164,7 +164,7 @@
                 </div>
                       <!-- 单独处理第一个元素 -->
       <div v-if="loadFindTop10Details.length > 0">
-        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].id)">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].detailsId)">
           <div style="display: flex; align-items: center;margin-bottom: 14px;">
             <i class="num">1</i>
             <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 95px; height: 140px;margin-top: -6px;">
@@ -175,7 +175,7 @@
       </div>
       <!-- 循环处理剩余元素 -->
       <div v-for="(drama, index) in loadFindTop10Details.slice(0,6)" :key="index">
-        <div class="drama-card3" @click="gotoloadFindTop10(drama.name,drama.id)">
+        <div class="drama-card3" @click="gotoloadFindTop10(drama.name,drama.detailsId)">
           <div style="display: flex; align-items: center;">
             <p style="color: #aaa; font-weight: 700; font-size: 20px; margin-left: 5px; margin-top: 8px;">{{ index + 2 }}</p>
             <span style="color: black; font-size: 20px; margin-left: 10px; margin-top: -4px; height: 40px;">{{ drama.name }}</span>

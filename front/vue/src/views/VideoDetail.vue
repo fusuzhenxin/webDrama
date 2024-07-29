@@ -132,9 +132,11 @@ const loadEpisode = async (episodeNumber) => {
   const actualEpisodeNumber = startIndex + episodeNumber;
   try {
     const res = await request.get(`/videos/${videoName.value}/episode/${actualEpisodeNumber}`);
-    const url = res.data.data;
+    const url = res.data.data.url;
+    // const name=res.data.data.name
+    console.log('res',res)
     if (videoPlayer.value) {
-      videoPlayer.value.src = url;
+      videoPlayer.value.src = `http://localhost:9090/play?url=${encodeURIComponent(url)}`;
       videoPlayer.value.load();
       videoPlayer.value.play();
     }

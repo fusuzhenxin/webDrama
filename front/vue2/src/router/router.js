@@ -65,6 +65,11 @@ const routes = [
             {
                 path: '/password',
                 component: ()=>import('@/views/Password.vue')
+            },
+            
+            {
+                path: '/commentList',
+                component: ()=>import('@/views/commentList.vue')
             }
 
 

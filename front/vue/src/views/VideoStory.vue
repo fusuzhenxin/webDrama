@@ -107,11 +107,18 @@
             <h3 style="color: red; font-size: 26px; width: 10px;margin-left: -22px;margin-top: -5px;">|</h3>
              <h3 style="margin-top: -10px;margin-left: 10px;">评论区</h3>
                 </div>
-                <textarea class="comment_content fl" name="comment_content" style="background-color: #f5f5f5;width: 700px;height: 150px;" placeholder="老弟，整两句"></textarea>
+                <textarea class="comment_content fl"  v-model="commentContent"  name="comment_content" style="background-color: #f5f5f5;width: 700px;height: 150px;" placeholder="老弟，整两句"></textarea>
                 <div style="display: flex;">
                     <p style="font-size: 18px;">还可以输入200字</p>
                     <el-button style="margin-left: 455px;margin-top: 10px;width:115px;height: 40px;background-color: red;color:white" @click="gotoPublish">发布</el-button>
                 </div> 
+                <div v-for="(comment, index) in comments" :key="index" class="comment-item">
+                      <div style="display: flex; justify-content: space-between;">
+                        <p style="font-size: 14px;"><strong>{{ comment.userId }}</strong></p>
+                        <p style="font-size: 12px;">{{ comment.createtime }}</p>
+                      </div>
+                  <p style="font-size: 14px; margin-top: 5px;">{{ comment.content }}</p>
+                </div>
                 <div class="pagination">
                 <el-button>首页</el-button>
                 <el-button>上一页</el-button>
@@ -212,7 +219,7 @@
                 </div>
                       <!-- 单独处理第一个元素 -->
       <div v-if="loadFindTop10Details.length > 0">
-        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].name,loadFindTop10Details[0].detailsId)">
+        <div  @click="gotoloadFindTop10(loadFindTop10Details[0].detailsId,loadFindTop10Details[0].name)">
           <div style="display: flex; align-items: center;margin-bottom: 14px;">
             <i class="num">1</i>
             <img :src="loadFindTop10Details[0].cover" :alt="loadFindTop10Details[0].name" class="drama-image" style="margin-left: 10px; margin-right: 10px; width: 95px; height: 140px;margin-top: -6px;">
@@ -223,7 +230,7 @@
       </div>
       <!-- 循环处理剩余元素 -->
       <div v-for="(drama, index) in loadFindTop10Details.slice(1,5)" :key="index">
-        <div class="drama-card3" @click="gotoloadFindTop10(drama.name,drama.detailsId)">
+        <div class="drama-card3" @click="gotoloadFindTop10(drama.detailsId,drama.name)">
           <div style="display: flex; align-items: center;">
             <p style="color: #aaa; font-weight: 700; font-size: 20px; margin-left: 5px; margin-top: 8px;">{{ index + 2 }}</p>
             <span style="color: black; font-size: 20px; margin-left: 10px; margin-top: -4px; height: 40px;">{{ drama.name }}</span>
@@ -293,10 +300,12 @@ const loadFindTop10Details=ref([])
 const loadFindCollectTopDetails=ref([])
 const pageNum= ref(1);
 const pageSize= ref(10);
+const comments=ref([])
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 const route=useRoute()
 const router=useRouter()
+const  commentContent=ref('')
 const userName=localStorage.getItem('userName')
 const initVideoName = () => {
   if (route.params.name) {
@@ -316,7 +325,23 @@ const initVideoName = () => {
 
 //评论发布
 const gotoPublish=async()=>{
- alert('谢谢你的评论，我们需要审核一下')
+  const publish = {
+    name: videoName.value,
+    userId: userName,
+    content: commentContent.value
+  }
+
+  const res= await request.post('/comments/save',publish)
+
+  if(res.data.code == '200'){
+    alert('谢谢你的评论，我们需要审核一下')
+  }
+ 
+}
+const publish=async()=>{
+  const res=await request.get('/comments',{params : {name: videoName.value}})
+  comments.value=res.data.data
+  console.log('comments',res.data.data);
 }
 //正在播出
 const loadFindCollectTop10=async()=>{
@@ -327,6 +352,7 @@ const loadFindCollectTop10=async()=>{
 const loadFindTop10 =async()=>{
   const  res=await request.get('/news/top10')
   loadFindTop10Details.value=res.data.data
+  console.log('loadFindTop10Details',res.data.data)
 }
 const browsePage = async () => {
   try {
@@ -358,7 +384,6 @@ const updateTimePage = async () => {
   try {
     const res = await request.get('/news/updateTimePage', { params: { pageSize: pageSize.value,pageNum: pageNum.value} });
     findUpdateTimePage.value = res.data.data.records;
-    console.log("================================",res.data.data);
   } catch (error) {
     console.error('Error searching:', error);
   }
@@ -368,7 +393,7 @@ const goToEpisode=async(episode)=>{
     router.push({ name: 'videoDetail', params: { id: episode,name: videoName.value } });
 }
 //热门视频
-const gotoloadFindTop10=(name,dramaId)=>{
+const gotoloadFindTop10=async(dramaId,name)=>{
   request.post(`/news/click/${dramaId}`)
   request.post('/news/click/',{
     id: dramaId,
@@ -419,6 +444,7 @@ onMounted(() => {
   browsePage();
   loadFindTop10()
   loadFindCollectTop10()
+  publish()
 });
 //一个多少集
 const loadNumberOfEpisodes = async () => {
@@ -497,7 +523,7 @@ loadShortDramas('逆袭')
 }
 .box-card3{
     width: 800px;
-    height: 450px;
+    height: auto;
     margin-top: 30px;
     border-radius: 0px;
     box-shadow: none;

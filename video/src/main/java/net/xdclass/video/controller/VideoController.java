@@ -1,5 +1,8 @@
 package net.xdclass.video.controller;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.xdclass.video.common.Result;
+import net.xdclass.video.entity.FileOne;
 import net.xdclass.video.mapper.AcquireMapper;
 import net.xdclass.video.service.AcquireService;
 import net.xdclass.video.service.VideoService;
@@ -25,27 +28,18 @@ public class VideoController {
        return Result.success(diversity);
     }
 
-    //获取每集url
     @GetMapping("/apiOne/videos/{videoName}/episode/{episodeNumber}")
     public Result getEpisodeUrl(@PathVariable String videoName, @PathVariable Integer episodeNumber) {
-        String EpisodeUrl="EpisodeUrl:"+videoName+":"+"第"+episodeNumber+"集";
+        String episodeKey = "EpisodeUrl:" + videoName + ":第" + episodeNumber + "集";
 
-        Object  EpisodeUrlList= redisTemplate.opsForValue().get(EpisodeUrl);
-        if (EpisodeUrlList == null){
-            // 根据 videoName 和 episodeNumber 获取视频的 URL
-            String videoUrl = videoService.seleteEpisodeUrl(videoName, episodeNumber);
-            redisTemplate.opsForValue().set(EpisodeUrl,EpisodeUrlList);
-            return Result.success(videoUrl);
-        }
-//        // 根据 videoName 和 episodeNumber 获取视频的 URL
-//        String videoUrl = videoService.seleteEpisodeUrl(videoName, episodeNumber);
-//
-//        if (videoUrl == null) {
-//            return Result.error("Video not found");
-//        }
-//        return Result.success(videoUrl);
-        return Result.success(EpisodeUrlList);
+
+            FileOne fileOne= videoService.seleteEpisodeUrl(videoName, episodeNumber);
+
+
+        return Result.success(fileOne);
     }
+
+
 
     //除了短剧走这个爬虫接口
 //    @GetMapping("/save")

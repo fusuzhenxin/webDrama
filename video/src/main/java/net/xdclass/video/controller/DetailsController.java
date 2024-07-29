@@ -22,7 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.System.getProperty;
 
@@ -35,6 +37,7 @@ public class DetailsController {
     @Autowired
     private ImagesMapper imagesMapper;
    private String CoverList;
+
     private String MaterialList;
     private static final String FILE_UPLOAD_PATH = getProperty("user.dir")
             + File.separator
@@ -135,9 +138,19 @@ public class DetailsController {
 
 
     @Scheduled(cron = "0 15 10 ? * 6L")
+//    @Scheduled(cron = "*/6 * * * * ?")
     public  void Scheduled(){
-
-      redisTemplate.delete(CoverList);
+        List<String> classity=new ArrayList<>();
+        classity.add("时空之旅");
+        classity.add("逆袭");
+        classity.add("甜宠");
+        classity.add("重生");
+        for (String classifys: classity){
+            String CoverList="coverList:"+classifys;
+            if (CoverList!=null){
+                redisTemplate.delete(CoverList);
+            }
+        }
       redisTemplate.delete(MaterialList);
         System.out.println("清除缓存更新数据-线程1");
     }
@@ -150,10 +163,10 @@ public class DetailsController {
         if (List == null){
             QueryWrapper<Details> queryWrapper=new QueryWrapper<>();
             queryWrapper.like("classify", classify);
-            queryWrapper.last("limit 12"); // Limit to top 10
+            queryWrapper.last("limit 15"); // Limit to top 10
             List<Details> details= detailsMapper.selectList(queryWrapper);
             if (details!=null){
-                redisTemplate.opsForValue().set(CoverList,details);
+                redisTemplate.opsForValue().set(CoverList,details,2,TimeUnit.HOURS);
                 return Result.success(details);
             }
         }
@@ -173,7 +186,7 @@ public class DetailsController {
             queryWrapper.eq("username", username);
             List<Details> details= detailsMapper.selectList(queryWrapper);
             if (details!=null){
-                redisTemplate.opsForValue().set(MaterialList,details);
+                redisTemplate.opsForValue().set(MaterialList,details,2, TimeUnit.HOURS);
                 return Result.success(details);
             }
         }
@@ -191,7 +204,7 @@ public class DetailsController {
             queryWrapper.last("limit 6"); // Limit to top 8
             List<Details> details= detailsMapper.selectList(queryWrapper);
             if (details !=null){
-                redisTemplate.opsForValue().set(selectTopSix,details);
+                redisTemplate.opsForValue().set(selectTopSix,details,2,TimeUnit.DAYS);
                 return Result.success(details);
             }
         }

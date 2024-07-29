@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,22 +95,16 @@ public class NewsController {
         return Result.success(page);
     }
 
+
     @GetMapping("/apiOne/news/page")
     public Result findPage(@RequestParam Integer pageNum,
                            @RequestParam Integer pageSize){
-        String newsKey="news:"+"pageNum:"+pageNum+"-"+"pageSize:"+pageSize;
-        Object newsList = redisTemplate.opsForValue().get(newsKey);
-        if (newsList ==null){
+
             QueryWrapper<News> queryWrapper = new QueryWrapper<>();
             queryWrapper.orderByDesc("id");
             Page<News> page = newsService.page(new Page<>(pageNum, pageSize), queryWrapper);
-            if (page!=null){
-                redisTemplate.opsForValue().set(newsKey,page);
-                return Result.success(page);
-            }
 
-        }
-        return Result.success(newsList);
+        return Result.success(page);
     }
 
     //根据点赞数来排序热门视频
@@ -199,20 +194,28 @@ public class NewsController {
         News details = newsMapper.selectOne(queryWrapper);
         return Result.success(details);
     }
-
+    @PreAuthorize("hasAuthority('system:test:list')")
     @PostMapping("/api/news/save")
     public Result save(@RequestBody News news){
         newsService.saveOrUpdate(news);
         return Result.success();
     }
+    @PreAuthorize("hasAuthority('system:test:list')")
     @DeleteMapping("/api/news/{id}")
     public Result deleteById(@PathVariable Integer id){
+        String  newsKey="news:details:"+id;
+        redisTemplate.delete(newsKey);
         newsService.removeById(id);
         return Result.success();
     }
 
+    @PreAuthorize("hasAuthority('system:test:list')")
     @PostMapping("/api/news/del/batch")
     public Result deleteBatch(@RequestBody List<Integer> ids) {
+        for(Integer id :ids){
+            String  newsKey="news:details:"+id;
+            redisTemplate.delete(newsKey);
+        }
         newsService.removeByIds(ids);
         return Result.success();
     }

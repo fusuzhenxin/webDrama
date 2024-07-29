@@ -81,7 +81,7 @@ public class VideoServiceImpl extends ServiceImpl<VideoMapper , Video> implement
     }
 
     @Override
-    public String seleteEpisodeUrl(String videoName, Integer episodeNumber) {
+    public FileOne seleteEpisodeUrl(String videoName, Integer episodeNumber) {
 
         return videoMapper.seleteEpisodeUrl(videoName, episodeNumber);
     }
