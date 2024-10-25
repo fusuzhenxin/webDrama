@@ -1,4 +1,4 @@
-##springboot+vue的影视网站
+springboot+vue的影视网站
 ![image](https://github.com/user-attachments/assets/6a06af99-2800-44a1-9e95-9dfb281d8935)
 ![image](https://github.com/user-attachments/assets/2e535e95-086c-4923-85eb-2cfa3a9f2f28)
 ![image](https://github.com/user-attachments/assets/54ccadf8-4062-4ece-8b0b-5696ecd80453)
