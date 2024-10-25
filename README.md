@@ -9,4 +9,6 @@ springboot+vue的影视网站
 ![image](https://github.com/user-attachments/assets/7a2fc074-a3b1-48ec-876b-1c2993535395)
 ![image](https://github.com/user-attachments/assets/9e39522a-1bb1-4cf0-8096-1979e049e62d)
 ![image](https://github.com/user-attachments/assets/1cdf5e38-8456-45e1-8dd7-a596a0de5221)
-![Uploading image.png…]()
+
+
+![image](https://github.com/user-attachments/assets/ebe4b48b-64e7-40e8-8aa3-5961abc9b94a)
